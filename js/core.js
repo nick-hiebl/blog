@@ -21,6 +21,17 @@ const getSubcategory = () => {
   return map[group] || 'home';
 }
 
+const getSubcategoryHomeHref = () => {
+  const cat = getSubcategory();
+
+  return {
+    rpg: '/blog/rpg/',
+    meta: '/blog/meta/',
+    dev: '/blog/dev/',
+    home: '/blog/',
+  }[cat];
+}
+
 const getSubcategoryLogo = () => {
   const cat = getSubcategory();
 
@@ -33,6 +44,11 @@ const getSubcategoryLogo = () => {
     const brand = document.createElement('strong');
     brand.classList.add('brand');
     brand.textContent = 'RPG';
+    return brand;
+  } else if (cat === 'meta') {
+    const brand = document.createElement('code');
+    brand.classList.add('monospace');
+    brand.textContent = 'meta';
     return brand;
   } else {
     return document.createTextNode('');
@@ -56,15 +72,19 @@ const createHeader = () => {
     }
   });
 
-  const logo = document.createElement('span');
+  const logoLink = document.createElement('a');
+  logoLink.href = getSubcategoryHomeHref();
+
+  const logo = document.createElement('h1');
   logo.classList.add('logo');
 
   const brand = getSubcategoryLogo();
-
   logo.appendChild(brand);
   logo.appendChild(document.createTextNode(' Jumpoy blog'));
 
-  header.appendChild(logo);
+  logoLink.appendChild(logo);
+
+  header.appendChild(logoLink);
   header.appendChild(toggleButton);
 
   return header;

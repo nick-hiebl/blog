@@ -25,19 +25,23 @@
 body {
   --Brand: var(--Blue2);
   --Text: var(--Grey0);
+  --ActiveText: var(--Grey1);
   --Panel: var(--Grey5);
   --Background: var(--Grey4);
+  --LightPanel: var(--Grey3);
 }
 
 body.dark-mode {
   --Brand: var(--Blue3);
   --Text: var(--Grey5);
+  --ActiveText: var(--Grey4);
   --Panel: var(--Grey1);
   --Background: var(--Grey0);
+  --LightPanel: var(--Grey2);
 }
 
 body {
-  font-family: sans-serif;
+  font-family: verdana, sans-serif;
   background-color: var(--Background);
   color: var(--Text);
   display: flex;
@@ -85,11 +89,16 @@ body {
 
 .monospace {
   font-family: monospace;
+  background-color: var(--LightPanel);
+  padding: 0.25em;
 }
 
 .logo {
   font-weight: 600;
   font-size: 2em;
+  display: flex;
+  align-items: center;
+  column-gap: 0.25em;
 }
 
 button {
@@ -98,4 +107,12 @@ button {
   background-color: var(--Background);
   color: var(--Text);
   padding: 0.5em;
+}
+
+p {
+  line-height: 1.5;
+}
+
+a {
+  color: var(--ActiveText);
 }
