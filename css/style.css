@@ -1,3 +1,71 @@
+:root {
+  --Blue5: #ADD6EB;
+  --Blue4: #7DBDDE;
+  --Blue3: #4DA5D1;
+  --Blue2: #2978A0;
+  --Blue1: #1D5572;
+  --Blue0: #143D52;
+  --Aqua2: #ACFCD9;
+  --Aqua1: #75FAC0;
+  --Aqua0: #26F79D;
+  --Turquoise5: #7CDFCB;
+  --Turquoise4: #5DD9C1;
+  --Turquoise3: #2FC6A8;
+  --Turquoise2: #27A58C;
+  --Turquoise1: #1B7462;
+  --Turquoise0: #104238;
+  --Grey5: #FFFFFF;
+  --Grey4: #E0E0E0;
+  --Grey3: #C2C2C2;
+  --Grey2: #42424C;
+  --Grey1: #2C2C34;
+  --Grey0: #131316;
+}
+
+body {
+  --Text: var(--Grey0);
+  --Panel: var(--Grey5);
+  --Background: var(--Grey4);
+}
+
+body.dark-mode {
+  --Text: var(--Grey5);
+  --Panel: var(--Grey1);
+  --Background: var(--Grey0);
+}
+
 body {
   font-family: sans-serif;
+  background-color: var(--Background);
+  color: var(--Text);
+  display: flex;
+  justify-content: center;
+}
+
+#page {
+  display: grid;
+  grid-template-columns: 16em minmax(30em, 50em) 16em;
+  grid-template-areas:
+    'header header header'
+    'left-panel content right-panel';
+  width: fit-content;
+}
+
+#header {
+  grid-area: header;
+  min-height: 6em;
+}
+
+#left-panel {
+  grid-area: left-panel;
+}
+
+#right-panel {
+  grid-area: right-panel;
+}
+
+#content {
+  grid-area: content;
+  padding: 1em;
+  background-color: var(--Panel);
 }

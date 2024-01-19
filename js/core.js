@@ -1,8 +1,48 @@
-const core = document.getElementById('core');
+const createDivWithId = (id) => {
+  const newDiv = document.createElement('div');
+  newDiv.id = id;
 
-const main = document.createElement('div');
-main.classList.add('main');
+  return newDiv;
+}
 
-main.appendChild(core);
+const createHeader = () => {
+  const header = document.createElement('header');
+  header.id = 'header';
 
-document.body.appendChild(main);
+  const toggleButton = document.createElement('button');
+  toggleButton.textContent = 'Toggle dark mode';
+
+  toggleButton.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+  });
+
+  header.appendChild(toggleButton);
+
+  return header;
+}
+
+const createLeftPanel = () => {
+  return createDivWithId('left-panel');
+}
+
+const createRightPanel = () => {
+  return createDivWithId('right-panel');
+}
+
+const mainFunction = () => {
+  const core = document.getElementById('core');
+
+  const content = createDivWithId('content');
+  const page = createDivWithId('page');
+
+  content.appendChild(core);
+
+  page.appendChild(createHeader());
+  page.appendChild(createLeftPanel());
+  page.appendChild(content);
+  page.appendChild(createRightPanel());
+
+  document.body.appendChild(page);
+}
+
+document.addEventListener('DOMContentLoaded', mainFunction);
