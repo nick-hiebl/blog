@@ -1,0 +1,1 @@
+[Jumpoy blog](https://nick-hiebl.github.io/blog/).
