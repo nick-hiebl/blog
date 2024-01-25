@@ -1,125 +1,113 @@
 const DARK_MODE_CLASS = 'dark-mode';
 const DARK_MODE_LOCAL_STORAGE_KEY = 'isDarkMode';
 
-const createDivWithId = (id) => {
-  const newDiv = document.createElement('div');
-  newDiv.id = id;
+const BLOG_LIST_FETCH_URL = '/blog/data/blog_list.json';
 
-  return newDiv;
-}
+let blogListFetch = null;
 
-const getSubcategory = () => {
-  const path = location.pathname;
-  const [_empty, _blog, group] = path.split('/');
-
-  const map = {
-    rpg: 'rpg',
-    meta: 'meta',
-    dev: 'dev',
-  };
-
-  return map[group] || 'home';
-}
-
-const getSubcategoryHomeHref = () => {
-  const cat = getSubcategory();
-
-  return {
-    rpg: '/blog/rpg/',
-    meta: '/blog/meta/',
-    dev: '/blog/dev/',
-    home: '/blog/',
-  }[cat];
-}
-
-const getSubcategoryLogo = () => {
-  const cat = getSubcategory();
-
-  if (cat === 'home') {
-    const brand = document.createElement('strong');
-    brand.classList.add('brand');
-    brand.textContent = 'home';
-    return brand;
-  } else if (cat === 'rpg') {
-    const brand = document.createElement('strong');
-    brand.classList.add('brand');
-    brand.textContent = 'RPG';
-    return brand;
-  } else if (cat === 'meta') {
-    const brand = document.createElement('code');
-    brand.classList.add('monospace');
-    brand.textContent = 'meta';
-    return brand;
-  } else {
-    return document.createTextNode('');
+const getBlogList = async (category) => {
+  if (!blogListFetch) {
+    blogListFetch = fetch(BLOG_LIST_FETCH_URL)
+      .then(res => res.json());
   }
+
+  const blogs = await blogListFetch;
+
+  return blogs.filter(item => !category || item.category === category);
 }
 
-const createHeader = () => {
-  const header = document.createElement('header');
-  header.id = 'header';
+const aggregateArticles = async () => {
+  const articleList = document.getElementById('articles-list');
 
-  const toggleButton = document.createElement('button');
-  toggleButton.textContent = 'Toggle dark mode';
+  if (!articleList) {
+    return;
+  }
 
-  toggleButton.addEventListener('click', () => {
-    const isDark = document.body.classList.contains(DARK_MODE_CLASS);
-    document.body.classList.toggle(DARK_MODE_CLASS);
-    try {
-      localStorage.setItem(DARK_MODE_LOCAL_STORAGE_KEY, !isDark);
-    } catch {
-      console.warn('Error occurred saving dark mode setting to local storage');
-    }
-  });
+  const list = await getBlogList(articleList.getAttribute('data-category'));
 
-  const logoLink = document.createElement('a');
-  logoLink.href = getSubcategoryHomeHref();
+  for (const { href } of list) {
+    const item = document.createElement('li');
+    const frame = document.createElement('iframe');
+    frame.classList.add('loading-blog-post');
+    frame.src = href;
 
-  const logo = document.createElement('h1');
-  logo.classList.add('logo');
+    frame.onload = () => {
+      const inner = frame.contentWindow.document;
+      const article = inner.querySelector('article#content');
 
-  const brand = getSubcategoryLogo();
-  logo.appendChild(brand);
-  logo.appendChild(document.createTextNode(' Jumpoy blog'));
+      item.removeChild(frame);
+      item.appendChild(article);
 
-  logoLink.appendChild(logo);
+      const links = article.querySelectorAll('a[data-headline]');
 
-  header.appendChild(logoLink);
-  header.appendChild(toggleButton);
+      for (const link of Array.from(links)) {
+        link.href = href;
+      }
+    };
 
-  return header;
-}
+    item.appendChild(frame);
 
-// const createLeftPanel = () => {
-//   return createDivWithId('left-panel');
-// }
+    articleList.appendChild(item);
+  }
+};
 
-const createRightPanel = () => {
-  return createDivWithId('right-panel');
-}
+const aggregateBlogLinks = async () => {
+  const linkList = document.getElementById('blogs-links-list');
+
+  if (!linkList) {
+    return;
+  }
+
+  const list = await getBlogList(linkList.getAttribute('data-category'));
+
+  const listElement = document.createElement('ul');
+
+  for (const { href, title } of list) {
+    const div = document.createElement('li');
+
+    const link = document.createElement('a');
+    link.href = href;
+    link.textContent = title;
+
+    div.appendChild(link);
+
+    listElement.appendChild(div);
+  }
+
+  linkList.appendChild(listElement);
+};
+
+const mainAggregation = () => {
+  aggregateArticles();
+  aggregateBlogLinks();
+};
 
 const mainFunction = () => {
   try {
-    const isDark = localStorage.getItem(DARK_MODE_LOCAL_STORAGE_KEY) || false;
+    const isDark = localStorage.getItem(DARK_MODE_LOCAL_STORAGE_KEY) === 'true' || false;
+
     if (isDark) {
       document.body.classList.add(DARK_MODE_CLASS);
     }
   } catch {
     console.warn('Error occurred in reading dark mode setting from local storage');
   }
-  const core = document.getElementById('core');
 
-  const content = createDivWithId('content');
-  const page = createDivWithId('page');
+  document.getElementById('toggle-theme').addEventListener('click', () => {
+    const isDark = document.body.classList.contains(DARK_MODE_CLASS);
+    document.body.classList.toggle(DARK_MODE_CLASS);
+    try {
+      if (isDark) {
+        localStorage.removeItem(DARK_MODE_LOCAL_STORAGE_KEY);
+      } else {
+        localStorage.setItem(DARK_MODE_LOCAL_STORAGE_KEY, "true");
+      }
+    } catch {
+      console.warn('Error occurred saving dark mode setting to local storage');
+    }
+  });
 
-  content.appendChild(core);
-
-  page.appendChild(createHeader());
-  // page.appendChild(createLeftPanel());
-  page.appendChild(content);
-  page.appendChild(createRightPanel());
-
-  document.body.appendChild(page);
+  mainAggregation();
 }
 
 document.addEventListener('DOMContentLoaded', mainFunction);

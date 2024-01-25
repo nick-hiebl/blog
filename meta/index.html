@@ -1,12 +1,22 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Jumpoy blog</title>
+    <title>meta Jumpoy blog</title>
     <link rel="stylesheet" href="/blog/css/style.css" />
   </head>
   <body>
-    <div id="core"></div>
+    <div id="page">
+      <header id="header">
+        <a href="/blog/meta/">
+          <h1 class="logo">
+            <code class="monospace">meta</code> Jumpoy blog
+          </h1>
+        </a>
+        <button id="toggle-theme">Toggle dark mode</button>
+      </header>
+      <ul id="articles-list" data-category="meta"></ul>
+      <nav id="blogs-links-list" data-category="meta" class="right-panel"></nav>
+    </div>
     <script src="/blog/js/core.js"></script>
-    <script src="/blog/js/aggregate.js"></script>
   </body>
 </html>
