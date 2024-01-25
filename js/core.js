@@ -62,16 +62,23 @@ const aggregateBlogLinks = async () => {
 
   const listElement = document.createElement('ul');
 
-  for (const { href, title } of list) {
-    const div = document.createElement('li');
+  for (const { href, title, date } of list) {
+    const item = document.createElement('li');
 
     const link = document.createElement('a');
     link.href = href;
     link.textContent = title;
 
-    div.appendChild(link);
+    const time = document.createElement('time');
+    const timestamp = new Date(date);
 
-    listElement.appendChild(div);
+    time.textContent = timestamp.toLocaleDateString();
+
+    item.appendChild(link);
+    item.appendChild(document.createTextNode(' '));
+    item.appendChild(time);
+
+    listElement.appendChild(item);
   }
 
   linkList.appendChild(listElement);
