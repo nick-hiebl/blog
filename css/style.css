@@ -164,3 +164,38 @@ iframe.loading-blog-post {
     background: var(--TransparentGrey1);
   }
 }
+
+.generator {
+  width: 20rem;
+  height: 12rem;
+  border: 2px solid var(--Text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Garamond, serif;
+  font-size: 2rem;
+  border-radius: 1rem;
+}
+
+.generator.generator-small {
+  width: 12rem;
+  height: 8rem;
+}
+
+.disabled {
+  cursor: not-allowed;
+}
+
+.center-contents {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.margin-y-1 {
+  margin-block: 1rem;
+}
+
+.column-gap-1 {
+  column-gap: 1rem;
+}

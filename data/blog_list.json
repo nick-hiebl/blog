@@ -4,5 +4,11 @@
     "title": "My first post!",
     "date": "2024-01-19T00:00:00.000Z",
     "category": "meta"
+  },
+  {
+    "href": "/blog/meta/2024/01/25-generators-test",
+    "title": "Generators test",
+    "date": "2024-01-25T12:32:17.970Z",
+    "category": "meta"
   }
 ]
