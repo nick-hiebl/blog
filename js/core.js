@@ -39,10 +39,13 @@ const aggregateArticles = async () => {
 
       for (const link of Array.from(links)) {
         link.href = href;
+      }
+
+      for (const link of Array.from(article.querySelectorAll('a'))) {
         link.addEventListener('click', (e) => {
           if (!e.shiftKey && !e.ctrlKey && e.button === 0) {
-            window.location.href = href;
             e.preventDefault();
+            window.location.href = link.href;
           }
         })
       }
