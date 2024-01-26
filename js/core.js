@@ -35,14 +35,19 @@ const aggregateArticles = async () => {
       const inner = frame.contentWindow.document;
       const article = inner.querySelector('article#content');
 
-      item.removeChild(frame);
-      item.appendChild(article);
-
       const links = article.querySelectorAll('a[data-headline]');
 
       for (const link of Array.from(links)) {
         link.href = href;
       }
+
+      inner.body.appendChild(article);
+      inner.body.removeChild(inner.getElementById('page'));
+
+      frame.style.width = `${articleList.clientWidth}px`;
+      frame.style.height = `${article.clientHeight}px`;
+
+      frame.classList.remove('loading-blog-post');
     };
 
     item.appendChild(frame);

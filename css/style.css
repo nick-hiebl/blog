@@ -50,6 +50,7 @@ body {
   color: var(--Text);
   display: flex;
   justify-content: center;
+  margin: 0;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -144,12 +145,20 @@ a:hover {
   text-decoration: underline;
 }
 
-iframe.loading-blog-post {
+iframe {
   border: none;
+  width: auto;
+  height: auto;
+}
+
+iframe.loading-blog-post {
   border-radius: 4px;
 
   background: var(--TransparentGrey1);
   animation: shimmer 2s 12 ease-in-out;
+
+  width: 20rem;
+  height: 10rem;
 }
 
 @keyframes shimmer {
