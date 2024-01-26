@@ -39,6 +39,12 @@ const aggregateArticles = async () => {
 
       for (const link of Array.from(links)) {
         link.href = href;
+        link.addEventListener('click', (e) => {
+          if (!e.shiftKey && !e.ctrlKey && e.button === 0) {
+            window.location.href = href;
+            e.preventDefault();
+          }
+        })
       }
 
       inner.body.appendChild(article);
@@ -113,6 +119,19 @@ const mainFunction = () => {
         localStorage.removeItem(DARK_MODE_LOCAL_STORAGE_KEY);
       } else {
         localStorage.setItem(DARK_MODE_LOCAL_STORAGE_KEY, "true");
+      }
+
+      for (const iframe of Array.from(document.querySelectorAll('iframe'))) {
+        const url = new URL(iframe.src);
+
+        if (url.host === window.location.host) {
+          const innerBody = iframe.contentWindow.document.body;
+          if (isDark) {
+            innerBody.classList.remove(DARK_MODE_CLASS);
+          } else {
+            innerBody.classList.add(DARK_MODE_CLASS);
+          }
+        }
       }
     } catch {
       console.warn('Error occurred saving dark mode setting to local storage');
