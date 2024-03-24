@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let cloversAdded = false
 
-  const GROUP_COUNT = 3
+  const GROUP_COUNT = 1
   for (let i = 0; i < GROUP_COUNT; i++) {
     imageNames.forEach((name, index) => {
       const box = document.createElement('div')
