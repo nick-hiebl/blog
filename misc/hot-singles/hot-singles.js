@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const delay = imageNames.length * GROUP_COUNT - i * imageNames.length - index
 
-      box.style['animation-delay'] = `${-delay}s`
+      box.style['animation-delay'] = `${-1.5 * delay}s`
 
       container.appendChild(box)
     })
