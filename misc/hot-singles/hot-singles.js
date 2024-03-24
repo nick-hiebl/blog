@@ -21,17 +21,54 @@ function preload(img) {
   image.src = img.src
 }
 
+const imageNames = [
+  './images/01.png',
+  './images/02.png',
+  './images/03.png',
+  './images/04.png',
+  './images/05.png',
+  './images/06.png',
+  './images/07.png',
+  './images/08.png',
+]
+
 document.addEventListener('DOMContentLoaded', () => {
   const page1 = document.getElementById('page-1')
   const page2 = document.getElementById('page-2')
   const page3 = document.getElementById('page-3')
   const container = document.getElementById('scrolling-images')
-  const children = Array.from(container.childNodes).filter(t => t instanceof HTMLImageElement)
-  children.forEach(preload)
+  const images = []
+  const clovers = []
 
-  for (let i = 0; i < children.length; i++) {
-    const delay = i - children.length
-    children[i].style['animation-delay'] = `${delay}s`
+  imageNames.forEach(preload)
+
+  let cloversAdded = false
+
+  const GROUP_COUNT = 3
+  for (let i = 0; i < GROUP_COUNT; i++) {
+    imageNames.forEach((name, index) => {
+      const box = document.createElement('div')
+      box.classList.add('moving-image')
+
+      const image = document.createElement('img')
+      image.src = name
+      image.classList.add('single')
+      images.push(image)
+
+      const clover = document.createElement('img')
+      clover.src = './images/clover.png'
+      clover.classList.add('clover')
+      clovers.push(clover)
+
+      box.appendChild(image)
+      box.appendChild(clover)
+
+      const delay = imageNames.length * GROUP_COUNT - i * imageNames.length - index
+
+      box.style['animation-delay'] = `${-delay}s`
+
+      container.appendChild(box)
+    })
   }
 
   const button = document.getElementById('button')
@@ -57,8 +94,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('quit').addEventListener('click', async () => {
     button.classList.add('hidden')
     document.getElementById('reveal').classList.remove('hidden')
-    children.forEach(t => t.classList.add('gray'))
+    images.forEach(t => t.classList.add('gray'))
     page1.classList.remove('hidden')
     page3.classList.add('hidden')
+  })
+
+  document.getElementById('clover-trigger').addEventListener('click', () => {
+    clovers.forEach(clover => clover.classList.toggle('visible'))
   })
 })
