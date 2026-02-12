@@ -1,4 +1,4 @@
-const CANVAS_WIDTH = 400;
+const CANVAS_WIDTH = 360;
 
 /**
  * Pseudo-random-number-generator function from:
@@ -87,7 +87,7 @@ const onLoad = () => {
 
     ctx.fillStyle = 'red';
 
-    const midpoint = 200;
+    const midpoint = Math.floor(CANVAS_WIDTH / 2);
     const left = midpoint - Math.ceil(length / 2);
 
     ctx.fillRect(left, 110, length, 10);
