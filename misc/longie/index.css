@@ -1,0 +1,106 @@
+body {
+    background-color: black;
+    color: white;
+    font-family: sans-serif;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+canvas {
+    border: 1px solid orangered;
+}
+
+@keyframes wiggle {
+    0% { transform: rotate(0deg); }
+    20% { transform: rotate(-15deg); }
+    40% { transform: rotate(15deg); }
+    60% { transform: rotate(-15deg); }
+    80% { transform: rotate(15deg); }
+    100% { transform: rotate(0deg); }
+}
+
+.normal-guess {
+    list-style-type: none;
+    min-width: 120px;
+    background-color: #001083;
+    border-radius: 3px;
+    padding: 6px 12px;
+}
+
+.post-guess {
+    list-style-type: none;
+    min-width: 0;
+    opacity: 1;
+    font-size: 1.4em;
+    animation: wiggle 0.6s;
+}
+
+.post-guess[data-hidden="true"] {
+    opacity: 0;
+    animation: none;
+}
+
+ul {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0;
+}
+
+ul#post-guess-list {
+    flex-direction: row;
+    justify-content: center;
+}
+
+#blanket {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-color: #00000077;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#blanket[data-hidden="true"] {
+    display: none;
+}
+
+#modal {
+    text-align: center;
+    background-color: #363636;
+    border-radius: 12px;
+    padding: 9px 28px;
+    min-width: 240px;
+    padding-bottom: 20px;
+}
+
+button {
+    border: none;
+    border-radius: 3px;
+    padding: 3px 8px;
+    background-color: rgb(42, 138, 234);
+    color: white;
+}
+
+button:hover {
+    background-color: rgb(57, 122, 188);
+}
+
+button:active {
+    background-color: rgb(22, 77, 132);
+}
+
+input {
+    border: none;
+    border-radius: 3px;
+    padding: 3px;
+}

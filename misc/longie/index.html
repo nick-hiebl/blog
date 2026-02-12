@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <title>Longie</title>
+        <link rel="stylesheet" href="./index.css">
+    </head>
+    <body>
+        <main>
+            <h1>Longie</h1>
+            <canvas id="canvas" width="400" height="400"></canvas>
+            <div>The white reference line above is <span id="reference-length">100</span> pixels long.</div>
+            <div>
+                <label for="length-input">Guess the length:</label>
+                <input type="text" id="length-input" placeholder="100" />
+                <button id="guess-button">Guess</button>
+            </div>
+            <ul id="guess-list"></ul>
+        </main>
+        <div id="blanket" data-hidden="true">
+            <div id="modal">
+                <h2>You got it!</h2>
+                <div>Your guesses: <span id="post-guess-count">1/6</span></div>
+                <ul id="post-guess-list"></ul>
+                <button id="copy">Copy</button>
+            </div>
+        </div>
+        <script src="./longie.js"></script>
+    </body>
+</html>
