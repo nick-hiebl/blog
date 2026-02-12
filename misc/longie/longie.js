@@ -72,7 +72,7 @@ const FIRST_DATE = new Date('2026-02-12');
 FIRST_DATE.setHours(0, 0, 0, 0);
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 
-const MAX_GUESSES = 6;
+const MAX_GUESSES = 8;
 
 const onLoad = () => {
     const canvas = document.getElementById('canvas');
@@ -90,7 +90,7 @@ const onLoad = () => {
     const midpoint = 200;
     const left = midpoint - Math.ceil(length / 2);
 
-    ctx.fillRect(left, 160, length, 10);
+    ctx.fillRect(left, 110, length, 10);
 
     ctx.fillStyle = 'white';
 
@@ -112,6 +112,11 @@ const onLoad = () => {
         guessButton.disabled = true;
         guessInput.disabled = true;
         const guessCountText = `${guesses.length}/${MAX_GUESSES}`;
+        const completed = guesses.some(guess => guess.amount === length);
+
+        if (!completed) {
+            document.getElementById('title').textContent = 'So close!';
+        }
 
         document.getElementById('post-guess-count').textContent = guessCountText;
         const postGuessList = document.getElementById('post-guess-list');
@@ -176,7 +181,7 @@ https://nick-hiebl.github.io/blog/misc/longie/`;
 
         guessList.appendChild(row);
 
-        if (guessAmount === length) {
+        if (guessAmount === length || guesses.length >= MAX_GUESSES) {
             onComplete(guesses);
         }
     };
