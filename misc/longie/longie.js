@@ -68,7 +68,7 @@ const rateDistance = (difference) => {
     };
 };
 
-const FIRST_DATE = new Date('2026-02-12');
+const FIRST_DATE = new Date('2026-02-13');
 FIRST_DATE.setHours(0, 0, 0, 0);
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 
@@ -115,7 +115,9 @@ const onLoad = () => {
         const completed = guesses.some(guess => guess.amount === length);
 
         if (!completed) {
-            document.getElementById('title').textContent = 'So close!';
+            const isClose = guesses.some(guess => Math.abs(guess.amount - length) <= 4);
+
+            document.getElementById('title').textContent = isClose ? 'So close!' : 'Not quite!';
         }
 
         document.getElementById('post-guess-count').textContent = guessCountText;
