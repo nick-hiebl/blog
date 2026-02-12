@@ -10,7 +10,13 @@
             <div>The white reference line above is <span id="reference-length">100</span> pixels long.</div>
             <div>
                 <label for="length-input">Guess the length:</label>
-                <input type="text" id="length-input" placeholder="100" />
+                <input
+                    type="text"
+                    id="length-input"
+                    placeholder="100"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                />
                 <button id="guess-button">Guess</button>
             </div>
             <ul id="guess-list"></ul>
