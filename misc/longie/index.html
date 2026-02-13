@@ -24,7 +24,15 @@
                 <button id="guess-button" class="nice-button">Guess</button>
             </div>
             <ul id="guess-list"></ul>
-            <button data-action="modal" data-modal="finish-modal" class="nice-button">View results</button>
+            <button
+                id="view-results"
+                data-hidden="true"
+                data-action="modal"
+                data-modal="finish-modal"
+                class="nice-button"
+            >
+                View results
+            </button>
         </main>
         <dialog id="finish-modal">
             <button id="close" class="close-button subtle-button">✖</button>

@@ -104,6 +104,10 @@ dialog::backdrop {
     right: 4px;
 }
 
+button[data-hidden="true"] {
+    visibility: hidden;
+}
+
 .subtle-button {
     background: none;
     border: none;

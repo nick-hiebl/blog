@@ -117,6 +117,8 @@ const onLoad = () => {
         const guessCountText = `${guesses.length}/${MAX_GUESSES}`;
         const completed = guesses.some(guess => guess.amount === length);
 
+        document.getElementById('view-results').dataset.hidden = false;
+
         if (!completed) {
             const isClose = guesses.some(guess => Math.abs(guess.amount - length) <= 4);
 
