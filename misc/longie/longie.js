@@ -1,4 +1,8 @@
-const CANVAS_WIDTH = 360;
+const CANVAS_WIDTH = 250;
+const REL_IMAGE = './longie.png';
+
+const image = new Image(498, 128);
+image.src = REL_IMAGE;
 
 /**
  * Pseudo-random-number-generator function from:
@@ -77,7 +81,6 @@ const MAX_GUESSES = 8;
 const onLoad = () => {
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    ctx.imageSmoothingEnabled = false;
 
     const currentDate = new Date();
 
@@ -85,12 +88,12 @@ const onLoad = () => {
 
     const { length } = getDailyConfig(currentDate);
 
-    ctx.fillStyle = 'red';
-
     const midpoint = Math.floor(CANVAS_WIDTH / 2);
     const left = midpoint - Math.ceil(length / 2);
 
-    ctx.fillRect(left, 110, length, 10);
+    const height = length * 128 / 498;
+
+    ctx.drawImage(image, 0, 0, 498, 128, left, Math.floor(100 - height / 2), length, height);
 
     ctx.fillStyle = 'white';
 
@@ -204,5 +207,7 @@ https://nick-hiebl.github.io/blog/misc/longie/`;
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    onLoad();
+    image.onload = () => {
+        onLoad();
+    };
 });
