@@ -6,7 +6,10 @@
     </head>
     <body>
         <main>
-            <h1>Longie</h1>
+            <div class="header-row">
+                <h1>Longie</h1>
+                <button data-action="modal" data-modal="info-modal" class="subtle-button">🛈</button>
+            </div>
             <canvas id="canvas" width="250" height="200"></canvas>
             <div>The white reference line above is <span id="reference-length">100</span> pixels long.</div>
             <div>
@@ -18,18 +21,30 @@
                     inputmode="numeric"
                     pattern="[0-9]*"
                 />
-                <button id="guess-button">Guess</button>
+                <button id="guess-button" class="nice-button">Guess</button>
             </div>
             <ul id="guess-list"></ul>
+            <button data-action="modal" data-modal="finish-modal" class="nice-button">View results</button>
         </main>
-        <div id="blanket" data-hidden="true">
-            <div id="modal">
-                <h2 id="title">You got it!</h2>
-                <div>Your guesses: <span id="post-guess-count">1/8</span></div>
-                <ul id="post-guess-list"></ul>
-                <button id="copy">Copy</button>
-            </div>
-        </div>
+        <dialog id="finish-modal">
+            <button id="close" class="close-button subtle-button">✖</button>
+            <h2 id="title">You got it!</h2>
+            <div>Your guesses: <span id="post-guess-count">1/8</span></div>
+            <ul id="post-guess-list"></ul>
+            <button id="copy" class="nice-button">Copy</button>
+        </dialog>
+        <dialog id="info-modal">
+            <button id="close" class="close-button subtle-button">✖</button>
+            <h2 id="title">About Longie</h2>
+            <div>Guess how many pixels with Longie is in red rectangle.</div>
+            <div>You are given a 100px long white line as a reference.</div>
+            <div>The length is measured from the top of the hair to the bottom of the left shoe.</div>
+            <div>Boiling means you're within 3.</div>
+            <div>Hot means you're within 8.</div>
+            <div>Warm means you're within 12.</div>
+            <div>Cold means you're more than 12 away from the correct answer.</div>
+            <button id="close" class="nice-button">Got it!</button>
+        </dialog>
         <script src="./longie.js"></script>
     </body>
 </html>

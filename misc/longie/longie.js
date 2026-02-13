@@ -126,7 +126,7 @@ const onLoad = () => {
         document.getElementById('post-guess-count').textContent = guessCountText;
         const postGuessList = document.getElementById('post-guess-list');
 
-        document.getElementById('blanket').dataset.hidden = false;
+        document.getElementById('finish-modal').showModal();
 
         guesses.forEach((guess, index) => {
             const cell = document.createElement('li');
@@ -141,6 +141,7 @@ const onLoad = () => {
         });
 
         const copyButton = document.getElementById('copy');
+        copyButton.focus();
 
         let copyResetTimeout;
         let copiesDeep = 0;
@@ -207,6 +208,31 @@ https://nick-hiebl.github.io/blog/misc/longie/`;
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    const dialogs = document.getElementsByTagName('dialog');
+    Array.from(dialogs).forEach(dialog => {
+        const closeButtons = dialog.querySelectorAll('#close');
+
+        Array.from(closeButtons).forEach(closeButton => {
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    dialog.close();
+                });
+            }
+        });
+    });
+
+    const modalTriggers = document.querySelectorAll('button[data-action="modal"]');
+
+    modalTriggers.forEach(trigger => {
+        const relevantModal = document.getElementById(trigger.dataset.modal);
+
+        if (relevantModal) {
+            trigger.addEventListener('click', () => {
+                relevantModal.showModal();
+            });
+        }
+    });
+
     image.onload = () => {
         onLoad();
     };

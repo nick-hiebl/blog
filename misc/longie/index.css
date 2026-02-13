@@ -12,6 +12,25 @@ main {
     text-align: center;
 }
 
+.header-row {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    align-items: center;
+}
+
+.header-row > button {
+    font-size: 2em;
+    line-height: 20px;
+    border-radius: 50%;
+    aspect-ratio: 1;
+}
+
+.header-row > button:hover {
+    outline: 2px solid white;
+    cursor: pointer;
+}
+
 canvas {
     border: 1px solid orangered;
 }
@@ -58,33 +77,41 @@ ul#post-guess-list {
     justify-content: center;
 }
 
-#blanket {
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    position: absolute;
-    left: 0;
-    top: 0;
-    background-color: #00000077;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#blanket[data-hidden="true"] {
-    display: none;
-}
-
-#modal {
+dialog {
+    color: white;
     text-align: center;
     background-color: #363636;
     border-radius: 12px;
     padding: 9px 28px;
     min-width: 240px;
+    max-width: 300px;
     padding-bottom: 20px;
+    margin: 32px auto;
 }
 
-button {
+dialog#info-modal > div {
+    padding-bottom: 8px;
+    text-align: left;
+}
+
+dialog::backdrop {
+    background-color: #00000088;
+}
+
+.close-button {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+}
+
+.subtle-button {
+    background: none;
+    border: none;
+    padding: 2px;
+    color: white;
+}
+
+.nice-button {
     border: none;
     border-radius: 3px;
     padding: 3px 8px;
@@ -92,11 +119,11 @@ button {
     color: white;
 }
 
-button:hover {
+.nice-button:hover {
     background-color: rgb(57, 122, 188);
 }
 
-button:active {
+.nice-button:active {
     background-color: rgb(22, 77, 132);
 }
 
