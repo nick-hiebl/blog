@@ -20,7 +20,7 @@ main {
 }
 
 .header-row > button {
-    font-size: 2em;
+    font-size: 1.2em;
     line-height: 20px;
     border-radius: 50%;
     aspect-ratio: 1;
