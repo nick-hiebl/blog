@@ -87,6 +87,8 @@ dialog {
     max-width: 300px;
     padding-bottom: 20px;
     margin: 32px auto;
+    align-items: center;
+    overflow: visible;
 }
 
 dialog#info-modal > div {
@@ -121,6 +123,7 @@ button[data-hidden="true"] {
     padding: 3px 8px;
     background-color: rgb(42, 138, 234);
     color: white;
+    cursor: pointer;
 }
 
 .nice-button:hover {
@@ -135,4 +138,37 @@ input {
     border: none;
     border-radius: 3px;
     padding: 3px;
+}
+
+#confetti-target {
+    width: 0px;
+    height: 0px;
+    position: relative;
+}
+
+@keyframes mover {
+    0% {
+        transform: translate(0px, 0px);
+        opacity: 100%;
+    }
+
+    70% {
+        opacity: 30%;
+    }
+
+    100% {
+        transform: translate(var(--target-x), var(--target-y));
+        opacity: 0%;
+    }
+}
+
+.confetti {
+    position: absolute;
+    transform: translate(var(--target-x), var(--target-y));
+    animation: mover 1s ease-out;
+    opacity: 0%;
+}
+
+.confetti[data-initial="true"] {
+    transform: translate(0, 0);
 }

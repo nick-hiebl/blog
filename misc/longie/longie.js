@@ -23,7 +23,7 @@ function cyrb128(str) {
     h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
     h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
     h1 ^= (h2 ^ h3 ^ h4), h2 ^= h1, h3 ^= h1, h4 ^= h1;
-    return [h1>>>0, h2>>>0, h3>>>0, h4>>>0];
+    return [h1 >>> 0, h2 >>> 0, h3 >>> 0, h4 >>> 0];
 }
 
 const getCurrentDateString = (date) => {
@@ -135,12 +135,48 @@ const onLoad = () => {
             cell.classList.add('post-guess');
             cell.textContent = guess.direction;
             cell.dataset.hidden = true;
-            postGuessList.appendChild(cell);
+
+            if (guess.amount === length) {
+                const confettiTarget = document.createElement('div');
+                confettiTarget.id = 'confetti-target';
+
+                const container = document.createElement('div');
+                container.appendChild(confettiTarget);
+                container.appendChild(cell);
+
+                postGuessList.appendChild(container);
+            } else {
+                postGuessList.appendChild(cell);
+            }
 
             setTimeout(() => {
                 cell.dataset.hidden = false;
             }, (index + 1) * 250);
         });
+
+        if (completed) {
+            const target = document.getElementById('confetti-target');
+
+            if (target) {
+                setTimeout(() => {
+                    for (let i = 0; i < 15; i++) {
+                        const confetti = document.createElement('span');
+                        confetti.textContent = '🎉';
+                        confetti.classList.add('confetti');
+                        confetti.dataset.initial = true;
+
+                        const targetAngle = Math.random() * 2 * Math.PI;
+                        const radius = 32 * Math.random() + 16;
+
+                        confetti.style.setProperty('--target-x', `${Math.sin(targetAngle) * radius}px`);
+                        confetti.style.setProperty('--target-y', `${Math.cos(targetAngle) * radius}px`);
+
+                        target.appendChild(confetti);
+                        confetti.dataset.initial = false;
+                    }
+                }, (guesses.length + 1) * 250);
+            }
+        }
 
         const copyButton = document.getElementById('copy');
         copyButton.focus();
@@ -177,7 +213,7 @@ https://nick-hiebl.github.io/blog/misc/longie/`;
         if (typeof guessAmount !== 'number' || isNaN(guessAmount) || guessAmount < 0) {
             return;
         }
-        
+
         const row = document.createElement('li');
         row.classList.add('normal-guess');
         const { distanceText, direction, distanceColor } = rateDistance(guessAmount - length);
