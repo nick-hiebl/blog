@@ -9,7 +9,7 @@ class DoubleEndedQueue {
     }
 
     push(item) {
-        this.tail.append(item);
+        this.tail.push(item);
     }
 
     head() {
@@ -23,6 +23,8 @@ class DoubleEndedQueue {
             this.front = this.tail;
             this.front.reverse();
             this.tail = [];
+
+            return this.front.pop();
         } else {
             throw new Error('No items to pop!');
         }
@@ -51,6 +53,13 @@ const getKeyboardMove = () => {
 
 const coordToInt = (grid, cell) => {
     return grid[0].length * cell.y + cell.x;
+};
+
+const intToCoord = (grid, int) => {
+    return {
+        x: int % grid[0].length,
+        y: Math.floor(int / grid[0].length),
+    };
 };
 
 const isEdge = (grid, cell) => {
@@ -98,11 +107,61 @@ const floodFillGridFrom = (grid, fromPos, condition) => {
         }
     }
 
-    return Array.from(seen)
-        .map(int => ({
-            x: int % grid[0].length,
-            y: Math.floor(int / grid[0].length),
-        }));
+    return Array.from(seen).map(int => intToCoord(grid, int));
+};
+
+const produceFromPath = (grid, fromMap, endInt) => {
+    const seen = new Set();
+    const path = [];
+
+    let current = endInt;
+    while (fromMap.has(current)) {
+        seen.add(current);
+        path.push(current);
+        current = fromMap.get(current);
+        if (seen.has(current)) {
+            break;
+        }
+    }
+
+    path.reverse();
+
+    return path.map(int => intToCoord(grid, int));
+};
+
+const canPathfindHome = (grid, fromPos, id) => {
+    const queue = new DoubleEndedQueue();
+    queue.push(fromPos);
+    const from = new Map();
+
+    while (!queue.empty()) {
+        const current = queue.pop();
+
+        const int = coordToInt(grid, current);
+
+        for (const neighbour of getNeighbours(grid, current)) {
+            const neighbourInt = coordToInt(grid, neighbour);
+
+            if (from.has(neighbourInt)) {
+                continue;
+            }
+
+            from.set(neighbourInt, int);
+
+            const cell = grid[neighbour.y][neighbour.x];
+            if (cell.claimed === id) {
+                // Reached home, return
+                return produceFromPath(grid, from, neighbourInt);
+            } else if (cell.claiming === id) {
+                // Cannot walk here as we would cut our own path
+                continue;
+            } else {
+                queue.push(neighbour);
+            }
+        }
+    }
+
+    return false;
 };
 
 const fillClaiming = (grid, fromPos, id, agents) => {
@@ -235,6 +294,11 @@ const createAgent = (grid, agents, pos, strategy) => {
             steps.splice(chosenIndex, 1);
 
             if (grid[nextPos.y][nextPos.x].claiming === agent.id) {
+                badChoices.push(nextPos);
+                continue;
+            }
+
+            if (!canPathfindHome(grid, nextPos, agent.id)) {
                 badChoices.push(nextPos);
                 continue;
             }
