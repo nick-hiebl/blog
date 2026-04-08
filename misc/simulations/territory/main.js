@@ -2,6 +2,10 @@ const TIME_TO_MOVE = 200;
 
 const keyboardMap = {};
 
+const addCoord = (a, b) => {
+    return { x: a.x + b.x, y: a.y + b.y };
+};
+
 const getKeyboardMove = () => {
     if (keyboardMap['w']) {
         return { x: 0, y: -1 };
@@ -70,13 +74,13 @@ const floodFillGridFrom = (grid, fromPos, condition) => {
         }));
 };
 
-const fillClaiming = (grid, fromPos, id) => {
+const fillClaiming = (grid, fromPos, id, agents) => {
     for (const pos of floodFillGridFrom(grid, fromPos, c => c.claiming === id)) {
         grid[pos.y][pos.x].claiming = null;
         grid[pos.y][pos.x].claimed = id;
     }
 
-    findFloodRegion(grid, id);
+    findFloodRegion(grid, id, agents);
 };
 
 const clearBoardOfId = (grid, id) => {
@@ -93,7 +97,7 @@ const clearBoardOfId = (grid, id) => {
     }
 };
 
-const findFloodRegion = (grid, id) => {
+const findFloodRegion = (grid, id, agents) => {
     const seen = new Set();
 
     for (let r = 0; r < grid.length; r++) {
@@ -125,6 +129,16 @@ const findFloodRegion = (grid, id) => {
             } else {
                 connected.forEach(pos => {
                     grid[pos.y][pos.x] = { claimed: id, claiming: null };
+
+                    agents.forEach(agent => {
+                        if (agent.id === id) {
+                            return;
+                        }
+
+                        if (pos.x === agent.pos.x && pos.y === agent.pos.y) {
+                            agent.dead = true;
+                        }
+                    })
                 });
             }
         }
@@ -132,7 +146,7 @@ const findFloodRegion = (grid, id) => {
 };
 
 const createAgent = (grid, agents, pos, strategy) => {
-    const id = Math.random().toString().slice(2);
+    const id = Math.random().toString().slice(2, 6);
 
     const hue = Math.floor(Math.random() * 360);
 
@@ -140,8 +154,9 @@ const createAgent = (grid, agents, pos, strategy) => {
         pos,
         id,
         color: `hsl(${hue}, 70%, 70%)`,
-        claimingColor: `hsla(${hue}, 60%, 80%, 35%)`,
+        claimingColor: `hsla(${hue}, 60%, 80%, 50%)`,
         lastMovedTime: performance.now(),
+        timeToMove: strategy === 'player' ? TIME_TO_MOVE / 3 : TIME_TO_MOVE,
     };
 
     const resolveMove = (nextPos) => {
@@ -159,7 +174,7 @@ const createAgent = (grid, agents, pos, strategy) => {
             agents.find(other => other.id === nextCell.claiming).dead = true;
             nextCell.claiming = agent.id;
         } else if (nextCell.claimed === agent.id) {
-            fillClaiming(grid, agent.pos, agent.id);
+            fillClaiming(grid, agent.pos, agent.id, agents);
         } else {
             nextCell.claiming = agent.id;
         }
@@ -176,20 +191,30 @@ const createAgent = (grid, agents, pos, strategy) => {
                 return false;
             }
 
-            return resolveMove({ x: move.x + agent.pos.x, y: move.y + agent.pos.y });
+            return resolveMove(addCoord(move, agent.pos));
         }
 
-        const steps = [{ x: 0, y: 1 }, { x: 0, y: -1 }, { x: 1, y: 0 }, { x: -1, y: 0 }];
+        const steps = getNeighbours(grid, agent.pos);
+
+        const lowPriorityQueue = [];
 
         while (steps.length > 0) {
             const chosenIndex = Math.floor(Math.random() * steps.length);
-            const chosenStep = steps[chosenIndex];
+            const nextPos = steps[chosenIndex];
             steps.splice(chosenIndex, 1);
-            const nextPos = { x: agent.pos.x + chosenStep.x, y: agent.pos.y + chosenStep.y };
+
+            if (grid[nextPos.y][nextPos.x].claiming === agent.id) {
+                lowPriorityQueue.push(nextPos);
+                continue;
+            }
 
             if (resolveMove(nextPos)) {
                 return true;
             }
+        }
+
+        if (lowPriorityQueue.length > 0) {
+            return resolveMove(lowPriorityQueue[0]);
         }
 
         return false;
@@ -198,7 +223,7 @@ const createAgent = (grid, agents, pos, strategy) => {
     const update = () => {
         const time = performance.now();
         const timeSinceLastMove = time - agent.lastMovedTime;
-        if (timeSinceLastMove > TIME_TO_MOVE) {
+        if (timeSinceLastMove > agent.timeToMove) {
             const flag = tryMove();
 
             if (flag) {
@@ -257,6 +282,8 @@ const mainFunction = () => {
         return map;
     }, {});
 
+    window.agentsMap = agentsMap;
+
     const rectInGrid = (x, y) => {
         ctx.fillRect(x * GRID_SCALE + 1, y * GRID_SCALE + 1, GRID_SCALE - 2, GRID_SCALE - 2);
     };
@@ -264,6 +291,33 @@ const mainFunction = () => {
     const draw = () => {
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, width, height);
+
+        if (agents.length < 5) {
+            const randomX = Math.floor(Math.random() * gameWidth);
+            const randomY = Math.floor(Math.random() * gameHeight);
+
+            const cell = grid[randomY][randomX];
+            if (!cell.claimed && !cell.claiming) {
+                const newAgent = createAgent(grid, agents, { x: randomX, y: randomY });
+                agents.push(newAgent);
+                cell.claimed = newAgent.id;
+                agentsMap[newAgent.id] = newAgent;
+            }
+        }
+
+        for (const agent of agents) {
+            agent.update();
+        }
+
+        for (let i = agents.length - 1; i >= 0; i--) {
+            const agent = agents[i];
+            if (agent.dead) {
+                clearBoardOfId(grid, agent.id);
+                delete agentsMap[agent.id];
+
+                agents.splice(i, 1);
+            }
+        }
 
         for (let r = 0; r < grid.length; r++) {
             const row = grid[r];
@@ -286,16 +340,7 @@ const mainFunction = () => {
             }
         }
 
-        for (let i = agents.length - 1; i >= 0; i--) {
-            if (agents[i].dead) {
-                clearBoardOfId(grid, agents[i].id);
-                agents.splice(i, 1);
-            }
-        }
-
         for (const agent of agents) {
-            agent.update();
-
             ctx.fillStyle = agent.color;
             ctx.fillRect(agent.pos.x * GRID_SCALE, agent.pos.y * GRID_SCALE, GRID_SCALE, GRID_SCALE);
         }
