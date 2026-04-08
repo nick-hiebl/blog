@@ -1,3 +1,34 @@
+class DoubleEndedQueue {
+    constructor() {
+        this.front = [];
+        this.tail = [];
+    }
+
+    empty() {
+        return this.front.length === 0 && this.tail.length === 0;
+    }
+
+    push(item) {
+        this.tail.append(item);
+    }
+
+    head() {
+        return this.front[this.front.length - 1];
+    }
+
+    pop() {
+        if (this.front.length > 0) {
+            return this.front.pop();
+        } else if (this.tail.length > 0) {
+            this.front = this.tail;
+            this.front.reverse();
+            this.tail = [];
+        } else {
+            throw new Error('No items to pop!');
+        }
+    }
+}
+
 const TIME_TO_MOVE = 200;
 
 const keyboardMap = {};
@@ -196,7 +227,7 @@ const createAgent = (grid, agents, pos, strategy) => {
 
         const steps = getNeighbours(grid, agent.pos);
 
-        const lowPriorityQueue = [];
+        const badChoices = [];
 
         while (steps.length > 0) {
             const chosenIndex = Math.floor(Math.random() * steps.length);
@@ -204,7 +235,7 @@ const createAgent = (grid, agents, pos, strategy) => {
             steps.splice(chosenIndex, 1);
 
             if (grid[nextPos.y][nextPos.x].claiming === agent.id) {
-                lowPriorityQueue.push(nextPos);
+                badChoices.push(nextPos);
                 continue;
             }
 
@@ -213,8 +244,8 @@ const createAgent = (grid, agents, pos, strategy) => {
             }
         }
 
-        if (lowPriorityQueue.length > 0) {
-            return resolveMove(lowPriorityQueue[0]);
+        if (badChoices.length > 0) {
+            return resolveMove(badChoices[0]);
         }
 
         return false;
