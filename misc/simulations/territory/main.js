@@ -31,7 +31,27 @@ class DoubleEndedQueue {
     }
 }
 
-const TIME_TO_MOVE = 1;
+class Bound {
+    constructor() {
+        this.reset();
+    }
+
+    reset() {
+        this.minX = Infinity;
+        this.maxX = -Infinity;
+        this.minY = Infinity;
+        this.maxY = -Infinity;
+    }
+
+    insert(pos) {
+        this.minX = Math.min(this.minX, pos.x);
+        this.maxX = Math.max(this.maxX, pos.x);
+        this.minY = Math.min(this.minY, pos.y);
+        this.maxY = Math.max(this.maxY, pos.y);
+    }
+}
+
+const TIME_TO_MOVE = 100;
 
 const keyboardMap = {};
 
@@ -82,7 +102,7 @@ function shuffle(array) {
     }
 }
 
-const getNeighbours = (grid, cell) => {
+const getNeighbours = (grid, cell, doShuffle = false) => {
     const neighbours = [];
 
     if (cell.x > 0) {
@@ -98,7 +118,9 @@ const getNeighbours = (grid, cell) => {
         neighbours.push({ x: cell.x, y: cell.y + 1 });
     }
 
-    shuffle(neighbours);
+    if (doShuffle) {
+        shuffle(neighbours);
+    }
 
     return neighbours;
 };
@@ -176,7 +198,7 @@ const findPathWithConditions = (grid, startPos, walkableCondition, endCondition)
 
         const int = coordToInt(grid, current);
 
-        for (const neighbour of getNeighbours(grid, current)) {
+        for (const neighbour of getNeighbours(grid, current, true)) {
             const neighbourInt = coordToInt(grid, neighbour);
 
             if (from.has(neighbourInt)) {
@@ -238,8 +260,19 @@ const findFloodRegion = (grid, id, agents) => {
 
     let total = 0;
 
-    for (let r = 0; r < grid.length; r++) {
-        for (let c = 0; c < grid[r].length; c++) {
+    const myAgent = agents.find(a => a.id === id);
+
+    if (!myAgent) {
+        return;
+    }
+
+    const loX = Math.max(0, myAgent.claimBound.minX - 1);
+    const hiX = Math.min(grid[0].length - 1, myAgent.claimBound.maxX + 1);
+    const loY = Math.max(0, myAgent.claimBound.minY - 1);
+    const hiY = Math.min(grid.length - 1, myAgent.claimBound.maxY + 1);
+
+    for (let r = loY; r <= hiY; r++) {
+        for (let c = loX; c <= hiX; c++) {
             if (grid[r][c].claimed === id) {
                 continue;
             }
@@ -377,6 +410,7 @@ const createAgent = (grid, agents, pos, strategy) => {
         lastMovedTime: performance.now(),
         timeToMove: strategy === 'player' ? TIME_TO_MOVE / 3 : TIME_TO_MOVE,
         claimPathLength: 0,
+        claimBound: new Bound(),
         path: null,
         owned: 1,
     };
@@ -410,10 +444,12 @@ const createAgent = (grid, agents, pos, strategy) => {
             if (agent.claimPathLength > 0) {
                 fillClaiming(grid, agent.pos, agent.id, agents);
                 agent.claimPathLength = 0;
+                agent.claimBound.reset();
             }
         } else {
             nextCell.claiming = agent.id;
             agent.claimPathLength += 1;
+            agent.claimBound.insert(nextPos);
         }
 
         agent.pos = nextPos;
@@ -525,7 +561,7 @@ const createAgent = (grid, agents, pos, strategy) => {
             }
         }
 
-        const steps = getNeighbours(grid, agent.pos);
+        const steps = getNeighbours(grid, agent.pos, true);
 
         const badChoices = [];
 
@@ -635,8 +671,9 @@ const mainFunction = () => {
         ctx.fillRect(x * GRID_SCALE + 1, y * GRID_SCALE + 1, GRID_SCALE - 2, GRID_SCALE - 2);
     };
 
-    const COUNT_COOLDOWN = 100;
+    const COUNT_COOLDOWN = 1000;
     const EMPTY_RANGE = 12;
+    const CHAMPION_RANGE = 0.2;
 
     let lastCountTime = performance.now();
 
@@ -646,9 +683,9 @@ const mainFunction = () => {
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, width, height);
 
-        const anyOver20 = agents.some(agent => agent.owned > gameHeight * gameWidth * 0.2);
+        const anyChampion = agents.some(agent => agent.owned > gameHeight * gameWidth * CHAMPION_RANGE);
 
-        if (agents.length < 16 && !anyOver20) {
+        if (agents.length < 16 && !anyChampion) {
             const randomX = Math.floor(Math.random() * gameWidth);
             const randomY = Math.floor(Math.random() * gameHeight);
 
@@ -724,6 +761,17 @@ const mainFunction = () => {
         for (const agent of agents) {
             ctx.fillStyle = agent.color;
             ctx.fillRect(agent.pos.x * GRID_SCALE, agent.pos.y * GRID_SCALE, GRID_SCALE, GRID_SCALE);
+
+            if (agent.claimPathLength > 0) {
+                ctx.strokeStyle = agent.color;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(
+                    agent.claimBound.minX * GRID_SCALE,
+                    agent.claimBound.minY * GRID_SCALE,
+                    (agent.claimBound.maxX - agent.claimBound.minX + 1) * GRID_SCALE,
+                    (agent.claimBound.maxY - agent.claimBound.minY + 1) * GRID_SCALE,
+                );
+            }
         }
 
         if (performance.now() - lastCountTime > COUNT_COOLDOWN) {
