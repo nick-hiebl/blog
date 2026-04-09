@@ -49,6 +49,11 @@ class Bound {
         this.minY = Math.min(this.minY, pos.y);
         this.maxY = Math.max(this.maxY, pos.y);
     }
+
+    join(other) {
+        this.insert({ x: other.minX, y: other.minY });
+        this.insert({ x: other.maxX, y: other.maxY });
+    }
 }
 
 const TIME_TO_MOVE = 100;
@@ -413,7 +418,10 @@ const createAgent = (grid, agents, pos, strategy) => {
         claimBound: new Bound(),
         path: null,
         owned: 1,
+        overallBound: new Bound(),
     };
+
+    agent.overallBound.insert(pos);
 
     const resolveMove = (nextPos) => {
         if (manhattanDist(nextPos, agent.pos) !== 1) {
@@ -444,6 +452,7 @@ const createAgent = (grid, agents, pos, strategy) => {
             if (agent.claimPathLength > 0) {
                 fillClaiming(grid, agent.pos, agent.id, agents);
                 agent.claimPathLength = 0;
+                agent.overallBound.join(agent.claimBound);
                 agent.claimBound.reset();
             }
         } else {
@@ -712,6 +721,7 @@ const mainFunction = () => {
             }
         }
 
+        /** DRAW Phase */
         for (let r = 0; r < grid.length; r++) {
             const row = grid[r];
 
@@ -762,9 +772,10 @@ const mainFunction = () => {
             ctx.fillStyle = agent.color;
             ctx.fillRect(agent.pos.x * GRID_SCALE, agent.pos.y * GRID_SCALE, GRID_SCALE, GRID_SCALE);
 
+            ctx.strokeStyle = agent.color;
+            ctx.lineWidth = 2;
+
             if (agent.claimPathLength > 0) {
-                ctx.strokeStyle = agent.color;
-                ctx.lineWidth = 2;
                 ctx.strokeRect(
                     agent.claimBound.minX * GRID_SCALE,
                     agent.claimBound.minY * GRID_SCALE,
@@ -772,6 +783,13 @@ const mainFunction = () => {
                     (agent.claimBound.maxY - agent.claimBound.minY + 1) * GRID_SCALE,
                 );
             }
+
+            ctx.strokeRect(
+                agent.overallBound.minX * GRID_SCALE,
+                agent.overallBound.minY * GRID_SCALE,
+                (agent.overallBound.maxX - agent.overallBound.minX + 1) * GRID_SCALE,
+                (agent.overallBound.maxY - agent.overallBound.minY + 1) * GRID_SCALE,
+            );
         }
 
         if (performance.now() - lastCountTime > COUNT_COOLDOWN) {
