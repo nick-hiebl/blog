@@ -611,7 +611,7 @@ const createAgent = (grid, agents, pos, strategy) => {
             const flag = tryMove();
 
             if (flag) {
-                agent.lastMovedTime += agent.timeToMove;
+                agent.lastMovedTime = performance.now();
             }
 
             if (moveCount !== 1) {
@@ -676,10 +676,6 @@ const mainFunction = () => {
 
     window.agentsMap = agentsMap;
 
-    const rectInGrid = (x, y) => {
-        ctx.fillRect(x * GRID_SCALE + 1, y * GRID_SCALE + 1, GRID_SCALE - 2, GRID_SCALE - 2);
-    };
-
     const COUNT_COOLDOWN = 1000;
     const EMPTY_RANGE = 12;
     const CHAMPION_RANGE = 0.2;
@@ -722,6 +718,13 @@ const mainFunction = () => {
         }
 
         /** DRAW Phase */
+        const rectInGrid = (x, y) => {
+            ctx.rect(x * GRID_SCALE + 1, y * GRID_SCALE + 1, GRID_SCALE - 2, GRID_SCALE - 2);
+        };
+
+        // Empty square pass
+        ctx.beginPath();
+        ctx.fillStyle = '#eee';
         for (let r = 0; r < grid.length; r++) {
             const row = grid[r];
 
@@ -729,42 +732,56 @@ const mainFunction = () => {
                 const cell = row[c];
 
                 if (!cell.claimed) {
-                    ctx.fillStyle = '#eee';
                     rectInGrid(c, r);
+                }
+            }
+        }
+        ctx.fill();
 
-                    // if (!newGrid[r][c]) {
-                    //     ctx.fillStyle = 'black';
-                    //     ctx.fillRect(c * GRID_SCALE + 4, r * GRID_SCALE + 4, 2, 2);
-                    // }
+        // Agent solid squares path
+        for (const agent of agents) {
+            ctx.beginPath();
+            ctx.fillStyle = agent.color;
 
-                } else {
-                    ctx.fillStyle = agentsMap[cell.claimed].color;
-                    rectInGrid(c, r);
+            for (let r = agent.overallBound.minY; r <= agent.overallBound.maxY; r++) {
+                const row = grid[r];
 
-                    if (c + 1 < row.length) {
-                        const rightCell = row[c + 1];
+                for (let c = agent.overallBound.minX; c <= agent.overallBound.maxX; c++) {
+                    const cell = row[c];
 
-                        if (rightCell.claimed === cell.claimed) {
-                            ctx.fillRect((c + 1) * GRID_SCALE - 1, r * GRID_SCALE + 1, 2, GRID_SCALE - 2);
+                    if (cell.claimed === agent.id) {
+                        rectInGrid(c, r);
+
+                        if (c + 1 < row.length && row[c + 1].claimed === agent.id) {
+                            ctx.rect((c + 1) * GRID_SCALE - 1, r * GRID_SCALE + 1, 2, GRID_SCALE - 2);
+                        }
+                        if (r + 1 < grid.length && grid[r + 1][c].claimed === agent.id) {
+                            ctx.rect(c * GRID_SCALE + 1, (r + 1) * GRID_SCALE - 1, GRID_SCALE - 2, 2);
                         }
                     }
+                }
+            }
+            ctx.fill();
+        }
 
-                    if (r + 1 < grid.length) {
-                        const downCell = grid[r + 1][c];
+        for (const agent of agents) {
+            if (agent.claimPathLength > 0) {
+                ctx.beginPath();
+                ctx.fillStyle = agent.claimingColor;
 
-                        if (downCell.claimed === cell.claimed) {
-                            ctx.fillRect(c * GRID_SCALE + 1, (r + 1) * GRID_SCALE - 1, GRID_SCALE - 2, 2);
+                for (let r = agent.claimBound.minY; r <= agent.claimBound.maxY; r++) {
+                    const row = grid[r];
+
+                    for (let c = agent.claimBound.minX; c <= agent.claimBound.maxX; c++) {
+                        const cell = row[c];
+
+                        if (cell.claiming === agent.id) {
+                            rectInGrid(c, r);
                         }
                     }
                 }
 
-                if (cell.claiming) {
-                    if (!agentsMap[cell.claiming]) {
-                        console.warn('Could not find color for this agent!');
-                    }
-                    ctx.fillStyle = agentsMap[cell.claiming].claimingColor;
-                    rectInGrid(c, r);
-                }
+                ctx.fill();
             }
         }
 
