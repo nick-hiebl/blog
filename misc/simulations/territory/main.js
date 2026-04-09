@@ -82,17 +82,6 @@ function shuffle(array) {
     }
 }
 
-const unitTestShuffleOk = (start) => {
-    const base = start.slice();
-    shuffle(start);
-
-    if (!base.length === start.length) {
-        throw new Error('Shuffled list does not satisfy');
-    }
-
-    return start;
-}
-
 const getNeighbours = (grid, cell) => {
     const neighbours = [];
 
@@ -297,6 +286,58 @@ const findFloodRegion = (grid, id, agents) => {
     return total;
 };
 
+const floodToEmptySpaces = (grid, minRequiredDistance) => {
+    const newGrid = [];
+
+    for (let r = 0; r < grid.length; r++) {
+        const row = [];
+        newGrid.push(row);
+
+        for (let c = 0; c < grid[r].length; c++) {
+            row.push(false);
+        }
+    }
+
+    const queue = new DoubleEndedQueue();
+    const seen = new Set();
+
+    for (let r = 0; r < grid.length; r++) {
+        for (let c = 0; c < grid[r].length; c++) {
+            const cell = grid[r][c];
+
+            if (cell.claimed || cell.claiming) {
+                queue.push({ pos: { x: c, y: r }, steps: 0 });
+                seen.add(coordToInt(grid, { x: c, y: r }));
+                newGrid[r][c] = true;
+            }
+        }
+    }
+
+    while (!queue.empty()) {
+        const { pos, steps } = queue.pop();
+
+        newGrid[pos.y][pos.x] = true;
+
+        if (steps >= minRequiredDistance) {
+            continue;
+        }
+
+        for (const neighbourPos of getNeighbours(grid, pos)) {
+            const neighbourInt = coordToInt(grid, neighbourPos);
+
+            if (seen.has(neighbourInt)) {
+                continue;
+            }
+
+            seen.add(neighbourInt);
+
+            queue.push({ pos: neighbourPos, steps: steps + 1 });
+        }
+    }
+
+    return newGrid;
+};
+
 const manhattanDist = (pos1, pos2) => {
     return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y);
 };
@@ -305,7 +346,7 @@ const findHue = agents => {
     let hue = Math.floor(Math.random() * 360);
 
     let trials = 0;
-    while (agents.some(other => Math.abs(other.hue - hue) < 20)) {
+    while (agents.some(other => Math.abs(other.hue - hue) < 10)) {
         hue = Math.floor(Math.random() * 360);
         trials++;
 
@@ -318,17 +359,21 @@ const findHue = agents => {
     return hue;
 };
 
+const randInt = (lo, hi) => Math.floor(Math.random() * (hi - lo) + lo);
+
 const createAgent = (grid, agents, pos, strategy) => {
     const id = Math.random().toString().slice(2, 6);
 
     const hue = findHue(agents);
+    const saturation = randInt(50, 90);
+    const lightness = randInt(40, 80);
 
     const agent = {
         pos,
         id,
         hue,
-        color: `hsl(${hue}, 70%, 70%)`,
-        claimingColor: `hsla(${hue}, 60%, 80%, 50%)`,
+        color: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
+        claimingColor: `hsla(${hue}, ${saturation}%, ${lightness}%, 50%)`,
         lastMovedTime: performance.now(),
         timeToMove: strategy === 'player' ? TIME_TO_MOVE / 3 : TIME_TO_MOVE,
         claimPathLength: 0,
@@ -591,8 +636,11 @@ const mainFunction = () => {
     };
 
     const COUNT_COOLDOWN = 100;
+    const EMPTY_RANGE = 12;
 
     let lastCountTime = performance.now();
+
+    let newGrid = floodToEmptySpaces(grid, EMPTY_RANGE);
 
     const draw = () => {
         ctx.fillStyle = 'white';
@@ -600,12 +648,12 @@ const mainFunction = () => {
 
         const anyOver20 = agents.some(agent => agent.owned > gameHeight * gameWidth * 0.2);
 
-        if (agents.length < 8 && !anyOver20) {
+        if (agents.length < 16 && !anyOver20) {
             const randomX = Math.floor(Math.random() * gameWidth);
             const randomY = Math.floor(Math.random() * gameHeight);
 
             const cell = grid[randomY][randomX];
-            if (!cell.claimed && !cell.claiming) {
+            if (!cell.claimed && !cell.claiming && !newGrid[randomY][randomX]) {
                 const newAgent = createAgent(grid, agents, { x: randomX, y: randomY });
                 agents.push(newAgent);
                 cell.claimed = newAgent.id;
@@ -636,9 +684,31 @@ const mainFunction = () => {
                 if (!cell.claimed) {
                     ctx.fillStyle = '#eee';
                     rectInGrid(c, r);
+
+                    // if (!newGrid[r][c]) {
+                    //     ctx.fillStyle = 'black';
+                    //     ctx.fillRect(c * GRID_SCALE + 4, r * GRID_SCALE + 4, 2, 2);
+                    // }
+
                 } else {
                     ctx.fillStyle = agentsMap[cell.claimed].color;
                     rectInGrid(c, r);
+
+                    if (c + 1 < row.length) {
+                        const rightCell = row[c + 1];
+
+                        if (rightCell.claimed === cell.claimed) {
+                            ctx.fillRect((c + 1) * GRID_SCALE - 1, r * GRID_SCALE + 1, 2, GRID_SCALE - 2);
+                        }
+                    }
+
+                    if (r + 1 < grid.length) {
+                        const downCell = grid[r + 1][c];
+
+                        if (downCell.claimed === cell.claimed) {
+                            ctx.fillRect(c * GRID_SCALE + 1, (r + 1) * GRID_SCALE - 1, GRID_SCALE - 2, 2);
+                        }
+                    }
                 }
 
                 if (cell.claiming) {
@@ -657,6 +727,8 @@ const mainFunction = () => {
         }
 
         if (performance.now() - lastCountTime > COUNT_COOLDOWN) {
+            newGrid = floodToEmptySpaces(grid, EMPTY_RANGE);
+
             lastCountTime = performance.now();
 
             for (const agent of agents) {
@@ -687,6 +759,9 @@ const mainFunction = () => {
 
             ctx.fillStyle = sortedAgents[i].color;
             ctx.fillRect(boxLeft + padding, boxTop + padding, boxHeight - 2 * padding, boxHeight - 2 * padding);
+
+            ctx.fillStyle = '#ffffff88';
+            ctx.fillRect(boxLeft + boxHeight, boxTop + padding, boxWidth - 3 * padding - boxHeight, boxHeight - 2 * padding);
 
             ctx.font = '20px sans-serif';
             ctx.fillStyle = 'black';
