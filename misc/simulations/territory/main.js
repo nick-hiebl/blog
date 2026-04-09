@@ -31,7 +31,7 @@ class DoubleEndedQueue {
     }
 }
 
-const TIME_TO_MOVE = 40;
+const TIME_TO_MOVE = 1;
 
 const keyboardMap = {};
 
@@ -221,12 +221,13 @@ const findPathWithConditions = (grid, startPos, walkableCondition, endCondition)
 };
 
 const fillClaiming = (grid, fromPos, id, agents) => {
-    for (const pos of floodFillGridFrom(grid, fromPos, c => c.claiming === id)) {
+    const trail = floodFillGridFrom(grid, fromPos, c => c.claiming === id);
+    for (const pos of trail) {
         grid[pos.y][pos.x].claiming = null;
         grid[pos.y][pos.x].claimed = id;
     }
 
-    findFloodRegion(grid, id, agents);
+    return trail.length + findFloodRegion(grid, id, agents);
 };
 
 const clearBoardOfId = (grid, id) => {
@@ -245,6 +246,8 @@ const clearBoardOfId = (grid, id) => {
 
 const findFloodRegion = (grid, id, agents) => {
     const seen = new Set();
+
+    let total = 0;
 
     for (let r = 0; r < grid.length; r++) {
         for (let c = 0; c < grid[r].length; c++) {
@@ -273,6 +276,7 @@ const findFloodRegion = (grid, id, agents) => {
             if (connected.some(pos => isEdge(grid, pos))) {
                 // Not claiming
             } else {
+                total += connected.length;
                 connected.forEach(pos => {
                     grid[pos.y][pos.x] = { claimed: id, claiming: null };
 
@@ -289,6 +293,8 @@ const findFloodRegion = (grid, id, agents) => {
             }
         }
     }
+
+    return total;
 };
 
 const manhattanDist = (pos1, pos2) => {
@@ -298,8 +304,15 @@ const manhattanDist = (pos1, pos2) => {
 const findHue = agents => {
     let hue = Math.floor(Math.random() * 360);
 
-    while (agents.some(other => Math.abs(other.hue, hue) < 15)) {
+    let trials = 0;
+    while (agents.some(other => Math.abs(other.hue - hue) < 20)) {
         hue = Math.floor(Math.random() * 360);
+        trials++;
+
+        if (trials > 100) {
+            console.warn('HUE', hue, agents.map(a => a.hue));
+            return hue;
+        }
     }
 
     return hue;
@@ -320,19 +333,23 @@ const createAgent = (grid, agents, pos, strategy) => {
         timeToMove: strategy === 'player' ? TIME_TO_MOVE / 3 : TIME_TO_MOVE,
         claimPathLength: 0,
         path: null,
+        owned: 1,
     };
 
     const resolveMove = (nextPos) => {
         if (manhattanDist(nextPos, agent.pos) !== 1) {
             console.error('Illegal move attempted');
-            throw new Error('Attempted illegal move');
+            // throw new Error('Attempted illegal move');
+            return false;
         }
 
         if (nextPos.x >= grid[0].length || nextPos.x < 0 || nextPos.y < 0 || nextPos.y >= grid.length) {
             // Must stay inside grid
+            console.warn('Tried to move outside of grid');
             return false;
         } else if (agents.some(other => other.pos.x === nextPos.x && other.pos.y === nextPos.y)) {
             // Must not overlap another agent
+            console.warn('Tried to step onto another agent');
             return false;
         }
 
@@ -381,6 +398,7 @@ const createAgent = (grid, agents, pos, strategy) => {
             const isPathOk = agent.path.some(spot => grid[spot.y][spot.x].claiming === agent.id);
             if (isPathOk) {
                 agent.path = null;
+                agent.pathDescription = null;
             } else {
                 const firstMove = agent.path[0];
                 while (agent.path.length > 0 && manhattanDist(agent.path[0], agent.pos) === 0) {
@@ -389,6 +407,7 @@ const createAgent = (grid, agents, pos, strategy) => {
 
                 if (agent.path.length === 0) {
                     agent.path = null;
+                    agent.pathDescription = null;
                 } else {
                     if (manhattanDist(firstMove, agent.pos) !== 1) {
                         console.warn('Illegal move in path');
@@ -399,6 +418,9 @@ const createAgent = (grid, agents, pos, strategy) => {
                     if (success) {
                         agent.path = agent.path.slice(1);
                         return true;
+                    } else {
+                        agent.path = null;
+                        agent.pathDescription = null;
                     }
 
                     console.warn('Could not follow saved path');
@@ -406,9 +428,10 @@ const createAgent = (grid, agents, pos, strategy) => {
             }
         } else {
             agent.path = null;
+            agent.pathDescription = null;
         }
 
-        const savePath = (path) => {
+        const savePath = (path, pathDescription) => {
             if (manhattanDist(agent.pos, path[0]) !== 1) {
                 console.warn('Given a BAD path');
             }
@@ -417,6 +440,7 @@ const createAgent = (grid, agents, pos, strategy) => {
 
             if (success) {
                 agent.path = path.slice(1);
+                agent.pathDescription = pathDescription;
                 return true;
             }
 
@@ -433,21 +457,25 @@ const createAgent = (grid, agents, pos, strategy) => {
                 if (manhattanDist(pathHome[0], agent.pos) !== 1) {
                     console.warn('Path found was a bad one');
                 }
-                if (savePath(pathHome)) {
+                if (savePath(pathHome, 'Returning home')) {
                     return true;
                 }
             }
         }
 
         if (isMyHome(agent.pos, currentCell)) {
-            // Try to get to unclaimed territory
-            const explorePath = findPathWithConditions(grid, agent.pos, () => true, (_, cell) => !isMyHome(_, cell));
-
-            if (!explorePath) {
-                console.warn('This agent could not find a path to new territory', explorePath);
+            if (agent.owned === grid[0].length * grid.length) {
+                // Agent owns the whole board, so skip this step
             } else {
-                if (savePath(explorePath)) {
-                    return true;
+                // Try to get to unclaimed territory
+                const explorePath = findPathWithConditions(grid, agent.pos, () => true, (_, cell) => !isMyHome(_, cell));
+
+                if (!explorePath) {
+                    console.warn('This agent could not find a path to new territory', explorePath);
+                } else {
+                    if (savePath(explorePath, 'Exploring')) {
+                        return true;
+                    }
                 }
             }
         }
@@ -455,7 +483,6 @@ const createAgent = (grid, agents, pos, strategy) => {
         const steps = getNeighbours(grid, agent.pos);
 
         const badChoices = [];
-
 
         while (steps.length > 0) {
             const chosenIndex = Math.floor(Math.random() * steps.length);
@@ -494,7 +521,7 @@ const createAgent = (grid, agents, pos, strategy) => {
             const flag = tryMove();
 
             if (flag) {
-                agent.lastMovedTime = time;
+                agent.lastMovedTime += agent.timeToMove;
             }
 
             if (moveCount !== 1) {
@@ -563,11 +590,17 @@ const mainFunction = () => {
         ctx.fillRect(x * GRID_SCALE + 1, y * GRID_SCALE + 1, GRID_SCALE - 2, GRID_SCALE - 2);
     };
 
+    const COUNT_COOLDOWN = 100;
+
+    let lastCountTime = performance.now();
+
     const draw = () => {
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, width, height);
 
-        if (agents.length < 5) {
+        const anyOver20 = agents.some(agent => agent.owned > gameHeight * gameWidth * 0.2);
+
+        if (agents.length < 8 && !anyOver20) {
             const randomX = Math.floor(Math.random() * gameWidth);
             const randomY = Math.floor(Math.random() * gameHeight);
 
@@ -609,6 +642,9 @@ const mainFunction = () => {
                 }
 
                 if (cell.claiming) {
+                    if (!agentsMap[cell.claiming]) {
+                        console.warn('Could not find color for this agent!');
+                    }
                     ctx.fillStyle = agentsMap[cell.claiming].claimingColor;
                     rectInGrid(c, r);
                 }
@@ -618,6 +654,46 @@ const mainFunction = () => {
         for (const agent of agents) {
             ctx.fillStyle = agent.color;
             ctx.fillRect(agent.pos.x * GRID_SCALE, agent.pos.y * GRID_SCALE, GRID_SCALE, GRID_SCALE);
+        }
+
+        if (performance.now() - lastCountTime > COUNT_COOLDOWN) {
+            lastCountTime = performance.now();
+
+            for (const agent of agents) {
+                agent.owned = 0;
+            }
+
+            for (const row of grid) {
+                for (const cell of row) {
+                    if (cell.claimed) {
+                        agentsMap[cell.claimed].owned += 1;
+                    }
+                }
+            }
+        }
+
+        const sortedAgents = agents.slice();
+        sortedAgents.sort((a, b) => a.owned - b.owned);
+
+        for (let i = 0; i < sortedAgents.length; i++) {
+            const boxWidth = 104;
+            const padding = 4;
+            const boxHeight = 32;
+            const boxLeft = width - boxWidth;
+            const boxTop = height - (boxHeight + padding * 2) * (i + 1);
+
+            ctx.fillStyle = '#00000055';
+            ctx.fillRect(boxLeft, boxTop, boxWidth - 2 * padding, boxHeight);
+
+            ctx.fillStyle = sortedAgents[i].color;
+            ctx.fillRect(boxLeft + padding, boxTop + padding, boxHeight - 2 * padding, boxHeight - 2 * padding);
+
+            ctx.font = '20px sans-serif';
+            ctx.fillStyle = 'black';
+
+            const owned = Math.round(sortedAgents[i].owned / (gameWidth * gameHeight) * 100);
+
+            ctx.fillText(`${owned}%`, boxLeft + boxHeight + padding, boxTop + boxHeight - 2 * padding);
         }
 
         requestAnimationFrame(draw);
