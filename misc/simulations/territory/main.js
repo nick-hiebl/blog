@@ -54,6 +54,30 @@ class Bound {
         this.insert({ x: other.minX, y: other.minY });
         this.insert({ x: other.maxX, y: other.maxY });
     }
+
+    noX(x) {
+        if (x === this.minX) {
+            if (x === this.maxX) {
+                this.reset();
+            }
+
+            this.minX += 1;
+        } else if (x === this.maxX) {
+            this.maxX -= 1;
+        }
+    }
+
+    noY(y) {
+        if (y === this.minY) {
+            if (y === this.maxY) {
+                this.reset();
+            }
+
+            this.minY += 1;
+        } else if (y === this.maxY) {
+            this.maxY -= 1;
+        }
+    }
 }
 
 const TIME_TO_MOVE = 100;
@@ -761,6 +785,49 @@ const mainFunction = () => {
                     }
                 }
             }
+
+            let seenTop = false, seenBottom = false;
+            for (let c = agent.overallBound.minX; c <= agent.overallBound.maxX; c++) {
+                if (grid[agent.overallBound.minY][c].claimed === agent.id) {
+                    seenTop = true;
+                }
+                if (grid[agent.overallBound.maxY][c].claimed === agent.id) {
+                    seenBottom = true;
+                }
+
+                if (seenTop && seenBottom) {
+                    break;
+                }
+            }
+
+            if (!seenTop) {
+                agent.overallBound.noY(agent.overallBound.minY);
+            }
+            if (!seenBottom) {
+                agent.overallBound.noY(agent.overallBound.maxY);
+            }
+
+            let seenLeft = false, seenRight = false;
+            for (let r = agent.overallBound.minY; r <= agent.overallBound.maxY; r++) {
+                if (grid[r][agent.overallBound.minX].claimed === agent.id) {
+                    seenLeft = true;
+                }
+                if (grid[r][agent.overallBound.maxX].claimed === agent.id) {
+                    seenRight = true;
+                }
+
+                if (seenLeft && seenRight) {
+                    break;
+                }
+            }
+
+            if (!seenLeft) {
+                agent.overallBound.noX(agent.overallBound.minX);
+            }
+            if (!seenRight) {
+                agent.overallBound.noX(agent.overallBound.maxX);
+            }
+
             ctx.fill();
         }
 
@@ -789,24 +856,24 @@ const mainFunction = () => {
             ctx.fillStyle = agent.color;
             ctx.fillRect(agent.pos.x * GRID_SCALE, agent.pos.y * GRID_SCALE, GRID_SCALE, GRID_SCALE);
 
-            ctx.strokeStyle = agent.color;
-            ctx.lineWidth = 2;
+            // ctx.strokeStyle = agent.color;
+            // ctx.lineWidth = 2;
 
-            if (agent.claimPathLength > 0) {
-                ctx.strokeRect(
-                    agent.claimBound.minX * GRID_SCALE,
-                    agent.claimBound.minY * GRID_SCALE,
-                    (agent.claimBound.maxX - agent.claimBound.minX + 1) * GRID_SCALE,
-                    (agent.claimBound.maxY - agent.claimBound.minY + 1) * GRID_SCALE,
-                );
-            }
+            // if (agent.claimPathLength > 0) {
+            //     ctx.strokeRect(
+            //         agent.claimBound.minX * GRID_SCALE,
+            //         agent.claimBound.minY * GRID_SCALE,
+            //         (agent.claimBound.maxX - agent.claimBound.minX + 1) * GRID_SCALE,
+            //         (agent.claimBound.maxY - agent.claimBound.minY + 1) * GRID_SCALE,
+            //     );
+            // }
 
-            ctx.strokeRect(
-                agent.overallBound.minX * GRID_SCALE,
-                agent.overallBound.minY * GRID_SCALE,
-                (agent.overallBound.maxX - agent.overallBound.minX + 1) * GRID_SCALE,
-                (agent.overallBound.maxY - agent.overallBound.minY + 1) * GRID_SCALE,
-            );
+            // ctx.strokeRect(
+            //     agent.overallBound.minX * GRID_SCALE,
+            //     agent.overallBound.minY * GRID_SCALE,
+            //     (agent.overallBound.maxX - agent.overallBound.minX + 1) * GRID_SCALE,
+            //     (agent.overallBound.maxY - agent.overallBound.minY + 1) * GRID_SCALE,
+            // );
         }
 
         if (performance.now() - lastCountTime > COUNT_COOLDOWN) {
