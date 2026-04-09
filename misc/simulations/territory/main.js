@@ -909,37 +909,50 @@ const mainFunction = () => {
         const sortedAgents = agents.slice();
         sortedAgents.sort((a, b) => a.owned - b.owned);
 
-        // Draw leader crown
-        const leader = sortedAgents[sortedAgents.length - 1];
-        const midpoint = {
-            x: Math.floor((leader.overallBound.minX + leader.overallBound.maxX) / 2) + 0.5,
-            y: Math.floor((leader.overallBound.minY + leader.overallBound.maxY) / 2) + 0.5,
-        };
+        const crowns = [
+            { color: 'gold', agent: sortedAgents[sortedAgents.length - 1] },
+            { color: 'silver', agent: sortedAgents[sortedAgents.length - 2] },
+            { color: '#cd7f32', agent: sortedAgents[sortedAgents.length - 3] },
+        ];
 
-        ctx.save();
-        ctx.translate(midpoint.x * GRID_SCALE, midpoint.y * GRID_SCALE);
+        for (const { color: crownColor, agent } of crowns) {
+            if (!agent) {
+                continue;
+            }
 
-        ctx.fillStyle = leader.color;
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
+            // Draw leader crown
+            const leader = agent;
+            const midpoint = {
+                x: Math.floor((leader.overallBound.minX + leader.overallBound.maxX) / 2) + 0.5,
+                y: Math.floor((leader.overallBound.minY + leader.overallBound.maxY) / 2) + 0.5,
+            };
 
-        const crownBottom = GRID_SCALE / 4;
-        // Corners
-        ctx.moveTo(GRID_SCALE, crownBottom);
-        ctx.lineTo(-GRID_SCALE, crownBottom);
-        ctx.lineTo(-GRID_SCALE, -GRID_SCALE);
-        ctx.lineTo(-GRID_SCALE / 2, -GRID_SCALE / 2);
-        ctx.lineTo(0, -GRID_SCALE);
-        ctx.lineTo(GRID_SCALE / 2, -GRID_SCALE / 2);
-        ctx.lineTo(GRID_SCALE, -GRID_SCALE);
+            ctx.save();
+            ctx.translate(midpoint.x * GRID_SCALE, midpoint.y * GRID_SCALE);
 
-        ctx.lineTo(GRID_SCALE, crownBottom);
+            ctx.fillStyle = crownColor;
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
 
-        ctx.fill();
-        ctx.stroke();
+            const crownBottom = GRID_SCALE / 4;
+            // Corners
+            ctx.moveTo(GRID_SCALE, crownBottom);
+            ctx.lineTo(-GRID_SCALE, crownBottom);
+            ctx.lineTo(-GRID_SCALE, -GRID_SCALE);
+            ctx.lineTo(-GRID_SCALE / 2, -GRID_SCALE / 2);
+            ctx.lineTo(0, -GRID_SCALE);
+            ctx.lineTo(GRID_SCALE / 2, -GRID_SCALE / 2);
+            ctx.lineTo(GRID_SCALE, -GRID_SCALE);
 
-        ctx.restore();
+            ctx.lineTo(GRID_SCALE, crownBottom);
+
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
 
         for (let i = 0; i < sortedAgents.length; i++) {
             const agent = sortedAgents[i];
@@ -966,7 +979,7 @@ const mainFunction = () => {
 
             ctx.fillText(`${owned}%`, boxLeft + boxHeight + padding, boxTop + boxHeight - 2 * padding);
 
-            if (agent.overallBound.contains({ x: mouse.x / GRID_SCALE, y: mouse.y / GRID_SCALE})) {
+            if (grid[Math.floor(mouse.y / GRID_SCALE)][Math.floor(mouse.x / GRID_SCALE)].claimed === agent.id) {
                 ctx.strokeStyle = 'blue';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(boxLeft, boxTop, boxWidth, boxHeight);
