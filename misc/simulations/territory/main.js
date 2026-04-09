@@ -31,7 +31,7 @@ class DoubleEndedQueue {
     }
 }
 
-const TIME_TO_MOVE = 200;
+const TIME_TO_MOVE = 40;
 
 const keyboardMap = {};
 
@@ -66,6 +66,33 @@ const isEdge = (grid, cell) => {
     return cell.x === 0 || cell.y === 0 || cell.x === grid[0].length - 1 || cell.y === grid.length;
 };
 
+function shuffle(array) {
+    let currentIndex = array.length;
+
+    // While there remain elements to shuffle...
+    while (currentIndex != 0) {
+
+        // Pick a remaining element...
+        let randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+
+        // And swap it with the current element.
+        [array[currentIndex], array[randomIndex]] = [
+            array[randomIndex], array[currentIndex]];
+    }
+}
+
+const unitTestShuffleOk = (start) => {
+    const base = start.slice();
+    shuffle(start);
+
+    if (!base.length === start.length) {
+        throw new Error('Shuffled list does not satisfy');
+    }
+
+    return start;
+}
+
 const getNeighbours = (grid, cell) => {
     const neighbours = [];
 
@@ -81,6 +108,8 @@ const getNeighbours = (grid, cell) => {
     if (cell.y < grid.length - 1) {
         neighbours.push({ x: cell.x, y: cell.y + 1 });
     }
+
+    shuffle(neighbours);
 
     return neighbours;
 };
@@ -116,6 +145,9 @@ const produceFromPath = (grid, fromMap, endInt) => {
 
     let current = endInt;
     while (fromMap.has(current)) {
+        if (fromMap.get(current) === -1) {
+            break;
+        }
         seen.add(current);
         path.push(current);
         current = fromMap.get(current);
@@ -126,13 +158,29 @@ const produceFromPath = (grid, fromMap, endInt) => {
 
     path.reverse();
 
-    return path.map(int => intToCoord(grid, int));
+    const path2 = path.map(int => intToCoord(grid, int));
+
+    path2.forEach((coord, index) => {
+        if (index === path2.length - 1) {
+            return;
+        }
+
+        const next = path2[index + 1];
+
+        if (manhattanDist(coord, next) !== 1) {
+            throw new Error('These be not next to each other');
+        }
+    });
+
+    return path2;
 };
 
-const canPathfindHome = (grid, fromPos, id) => {
+const findPathWithConditions = (grid, startPos, walkableCondition, endCondition) => {
     const queue = new DoubleEndedQueue();
-    queue.push(fromPos);
+    queue.push(startPos);
     const from = new Map();
+
+    from.set(coordToInt(grid, startPos), -1);
 
     while (!queue.empty()) {
         const current = queue.pop();
@@ -146,17 +194,25 @@ const canPathfindHome = (grid, fromPos, id) => {
                 continue;
             }
 
+            if (manhattanDist(neighbour, current) !== 1) {
+                throw new Error('Got crazy result');
+            }
+
+            if (manhattanDist(intToCoord(grid, neighbourInt), intToCoord(grid, int)) !== 1) {
+                throw new Error('Got crazy result');
+            }
+
             from.set(neighbourInt, int);
 
             const cell = grid[neighbour.y][neighbour.x];
-            if (cell.claimed === id) {
-                // Reached home, return
+            if (endCondition(neighbour, cell)) {
                 return produceFromPath(grid, from, neighbourInt);
-            } else if (cell.claiming === id) {
-                // Cannot walk here as we would cut our own path
-                continue;
-            } else {
+                // .filter(pos => pos.x !== startPos.x || pos.y !== startPos.y);
+            } else if (walkableCondition(neighbour, cell)) {
                 queue.push(neighbour);
+            } else {
+                // Not end condition or walkable, so exit
+                continue;
             }
         }
     }
@@ -235,21 +291,43 @@ const findFloodRegion = (grid, id, agents) => {
     }
 };
 
+const manhattanDist = (pos1, pos2) => {
+    return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y);
+};
+
+const findHue = agents => {
+    let hue = Math.floor(Math.random() * 360);
+
+    while (agents.some(other => Math.abs(other.hue, hue) < 15)) {
+        hue = Math.floor(Math.random() * 360);
+    }
+
+    return hue;
+};
+
 const createAgent = (grid, agents, pos, strategy) => {
     const id = Math.random().toString().slice(2, 6);
 
-    const hue = Math.floor(Math.random() * 360);
+    const hue = findHue(agents);
 
     const agent = {
         pos,
         id,
+        hue,
         color: `hsl(${hue}, 70%, 70%)`,
         claimingColor: `hsla(${hue}, 60%, 80%, 50%)`,
         lastMovedTime: performance.now(),
         timeToMove: strategy === 'player' ? TIME_TO_MOVE / 3 : TIME_TO_MOVE,
+        claimPathLength: 0,
+        path: null,
     };
 
     const resolveMove = (nextPos) => {
+        if (manhattanDist(nextPos, agent.pos) !== 1) {
+            console.error('Illegal move attempted');
+            throw new Error('Attempted illegal move');
+        }
+
         if (nextPos.x >= grid[0].length || nextPos.x < 0 || nextPos.y < 0 || nextPos.y >= grid.length) {
             // Must stay inside grid
             return false;
@@ -261,17 +339,30 @@ const createAgent = (grid, agents, pos, strategy) => {
         const nextCell = grid[nextPos.y][nextPos.x];
 
         if (nextCell.claiming) {
+            if (nextCell.claiming === agent.id) {
+                console.log('Overlapping own tail');
+            }
             agents.find(other => other.id === nextCell.claiming).dead = true;
             nextCell.claiming = agent.id;
         } else if (nextCell.claimed === agent.id) {
-            fillClaiming(grid, agent.pos, agent.id, agents);
+            if (agent.claimPathLength > 0) {
+                fillClaiming(grid, agent.pos, agent.id, agents);
+                agent.claimPathLength = 0;
+            }
         } else {
             nextCell.claiming = agent.id;
+            agent.claimPathLength += 1;
         }
 
         agent.pos = nextPos;
+        moveCount++;
         return true;
     };
+
+    const notMyTrail = (_, cell) => cell.claiming !== agent.id;
+    const isMyHome = (_, cell) => cell.claimed === agent.id;
+
+    let moveCount = 0;
 
     const tryMove = () => {
         if (strategy === 'player') {
@@ -284,9 +375,87 @@ const createAgent = (grid, agents, pos, strategy) => {
             return resolveMove(addCoord(move, agent.pos));
         }
 
+        const currentCell = grid[agent.pos.y][agent.pos.x];
+
+        if (agent.path && agent.path.length > 0) {
+            const isPathOk = agent.path.some(spot => grid[spot.y][spot.x].claiming === agent.id);
+            if (isPathOk) {
+                agent.path = null;
+            } else {
+                const firstMove = agent.path[0];
+                while (agent.path.length > 0 && manhattanDist(agent.path[0], agent.pos) === 0) {
+                    agent.path = agent.path.slice(1);
+                }
+
+                if (agent.path.length === 0) {
+                    agent.path = null;
+                } else {
+                    if (manhattanDist(firstMove, agent.pos) !== 1) {
+                        console.warn('Illegal move in path');
+                    }
+
+                    const success = resolveMove(firstMove);
+
+                    if (success) {
+                        agent.path = agent.path.slice(1);
+                        return true;
+                    }
+
+                    console.warn('Could not follow saved path');
+                }
+            }
+        } else {
+            agent.path = null;
+        }
+
+        const savePath = (path) => {
+            if (manhattanDist(agent.pos, path[0]) !== 1) {
+                console.warn('Given a BAD path');
+            }
+
+            const success = resolveMove(path[0]);
+
+            if (success) {
+                agent.path = path.slice(1);
+                return true;
+            }
+
+            console.warn('Did not succeed');
+            return false;
+        };
+
+        if (agent.claimPathLength > 10) {
+            const pathHome = findPathWithConditions(grid, agent.pos, notMyTrail, isMyHome);
+
+            if (!pathHome) {
+                console.warn('This agent could not find a path home', pathHome);
+            } else {
+                if (manhattanDist(pathHome[0], agent.pos) !== 1) {
+                    console.warn('Path found was a bad one');
+                }
+                if (savePath(pathHome)) {
+                    return true;
+                }
+            }
+        }
+
+        if (isMyHome(agent.pos, currentCell)) {
+            // Try to get to unclaimed territory
+            const explorePath = findPathWithConditions(grid, agent.pos, () => true, (_, cell) => !isMyHome(_, cell));
+
+            if (!explorePath) {
+                console.warn('This agent could not find a path to new territory', explorePath);
+            } else {
+                if (savePath(explorePath)) {
+                    return true;
+                }
+            }
+        }
+
         const steps = getNeighbours(grid, agent.pos);
 
         const badChoices = [];
+
 
         while (steps.length > 0) {
             const chosenIndex = Math.floor(Math.random() * steps.length);
@@ -294,12 +463,12 @@ const createAgent = (grid, agents, pos, strategy) => {
             steps.splice(chosenIndex, 1);
 
             if (grid[nextPos.y][nextPos.x].claiming === agent.id) {
-                badChoices.push(nextPos);
+                badChoices.push({ ...nextPos, reason: 'my tail' });
                 continue;
             }
 
-            if (!canPathfindHome(grid, nextPos, agent.id)) {
-                badChoices.push(nextPos);
+            if (!findPathWithConditions(grid, nextPos, notMyTrail, isMyHome)) {
+                badChoices.push({ ...nextPos, reason: 'no way home' });
                 continue;
             }
 
@@ -309,6 +478,7 @@ const createAgent = (grid, agents, pos, strategy) => {
         }
 
         if (badChoices.length > 0) {
+            console.log('Making bad choice');
             return resolveMove(badChoices[0]);
         }
 
@@ -319,10 +489,20 @@ const createAgent = (grid, agents, pos, strategy) => {
         const time = performance.now();
         const timeSinceLastMove = time - agent.lastMovedTime;
         if (timeSinceLastMove > agent.timeToMove) {
+            moveCount = 0;
+
             const flag = tryMove();
 
             if (flag) {
                 agent.lastMovedTime = time;
+            }
+
+            if (moveCount !== 1) {
+                console.warn('Moved', moveCount, 'times in a single tryMove()');
+            } else {
+                if (moveCount === 1 && !flag) {
+                    console.warn('Moved', agent.id, 'but flag was false');
+                }
             }
         }
     };
@@ -367,7 +547,7 @@ const mainFunction = () => {
     const agents = [];
 
     agents.push(createAgent(grid, agents, { x: Math.floor(gameWidth / 2), y: Math.floor(gameHeight) / 2 }));
-    agents.push(createAgent(grid, agents, { x: 5, y: 5 }, 'player'));
+    // agents.push(createAgent(grid, agents, { x: 5, y: 5 }, 'player'));
 
     window.agents = agents;
 
