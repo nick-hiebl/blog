@@ -1,90 +1,4 @@
-class DoubleEndedQueue {
-    constructor() {
-        this.front = [];
-        this.tail = [];
-    }
-
-    empty() {
-        return this.front.length === 0 && this.tail.length === 0;
-    }
-
-    push(item) {
-        this.tail.push(item);
-    }
-
-    head() {
-        return this.front[this.front.length - 1];
-    }
-
-    pop() {
-        if (this.front.length > 0) {
-            return this.front.pop();
-        } else if (this.tail.length > 0) {
-            this.front = this.tail;
-            this.front.reverse();
-            this.tail = [];
-
-            return this.front.pop();
-        } else {
-            throw new Error('No items to pop!');
-        }
-    }
-}
-
-class Bound {
-    constructor() {
-        this.reset();
-    }
-
-    reset() {
-        this.minX = Infinity;
-        this.maxX = -Infinity;
-        this.minY = Infinity;
-        this.maxY = -Infinity;
-    }
-
-    insert(pos) {
-        this.minX = Math.min(this.minX, pos.x);
-        this.maxX = Math.max(this.maxX, pos.x);
-        this.minY = Math.min(this.minY, pos.y);
-        this.maxY = Math.max(this.maxY, pos.y);
-    }
-
-    join(other) {
-        this.insert({ x: other.minX, y: other.minY });
-        this.insert({ x: other.maxX, y: other.maxY });
-    }
-
-    noX(x) {
-        if (x === this.minX) {
-            if (x === this.maxX) {
-                this.reset();
-            }
-
-            this.minX += 1;
-        } else if (x === this.maxX) {
-            this.maxX -= 1;
-        }
-    }
-
-    noY(y) {
-        if (y === this.minY) {
-            if (y === this.maxY) {
-                this.reset();
-            }
-
-            this.minY += 1;
-        } else if (y === this.maxY) {
-            this.maxY -= 1;
-        }
-    }
-
-    contains(pos) {
-        return this.minX <= pos.x && pos.x <= this.maxX && this.minY <= pos.y && pos.y <= this.maxY;
-    }
-}
-
-const TIME_TO_MOVE = 100;
+const TIME_TO_MOVE = 10;
 
 const keyboardMap = {};
 const mouse = { x: 0, y: 0 };
@@ -136,145 +50,6 @@ function shuffle(array) {
     }
 }
 
-const getNeighbours = (grid, cell, doShuffle = false) => {
-    const neighbours = [];
-
-    if (cell.x > 0) {
-        neighbours.push({ x: cell.x - 1, y: cell.y });
-    }
-    if (cell.y > 0) {
-        neighbours.push({ x: cell.x, y: cell.y - 1 });
-    }
-    if (cell.x < grid[0].length - 1) {
-        neighbours.push({ x: cell.x + 1, y: cell.y });
-    }
-    if (cell.y < grid.length - 1) {
-        neighbours.push({ x: cell.x, y: cell.y + 1 });
-    }
-
-    if (doShuffle) {
-        shuffle(neighbours);
-    }
-
-    return neighbours;
-};
-
-const floodFillGridFrom = (grid, fromPos, condition) => {
-    const queue = [fromPos];
-    const seen = new Set([coordToInt(grid, fromPos)]);
-
-    while (queue.length > 0) {
-        const current = queue.pop();
-
-        for (const neighbour of getNeighbours(grid, current)) {
-            if (!condition(grid[neighbour.y][neighbour.x])) {
-                continue;
-            }
-
-            const int = coordToInt(grid, neighbour);
-            if (seen.has(int)) {
-                continue;
-            } else {
-                seen.add(int);
-                queue.push(neighbour);
-            }
-        }
-    }
-
-    return Array.from(seen).map(int => intToCoord(grid, int));
-};
-
-const produceFromPath = (grid, fromMap, endInt) => {
-    const seen = new Set();
-    const path = [];
-
-    let current = endInt;
-    while (fromMap.has(current)) {
-        if (fromMap.get(current) === -1) {
-            break;
-        }
-        seen.add(current);
-        path.push(current);
-        current = fromMap.get(current);
-        if (seen.has(current)) {
-            break;
-        }
-    }
-
-    path.reverse();
-
-    const path2 = path.map(int => intToCoord(grid, int));
-
-    path2.forEach((coord, index) => {
-        if (index === path2.length - 1) {
-            return;
-        }
-
-        const next = path2[index + 1];
-
-        if (manhattanDist(coord, next) !== 1) {
-            throw new Error('These be not next to each other');
-        }
-    });
-
-    return path2;
-};
-
-const findPathWithConditions = (grid, startPos, walkableCondition, endCondition) => {
-    const queue = new DoubleEndedQueue();
-    queue.push(startPos);
-    const from = new Map();
-
-    from.set(coordToInt(grid, startPos), -1);
-
-    while (!queue.empty()) {
-        const current = queue.pop();
-
-        const int = coordToInt(grid, current);
-
-        for (const neighbour of getNeighbours(grid, current, true)) {
-            const neighbourInt = coordToInt(grid, neighbour);
-
-            if (from.has(neighbourInt)) {
-                continue;
-            }
-
-            if (manhattanDist(neighbour, current) !== 1) {
-                throw new Error('Got crazy result');
-            }
-
-            if (manhattanDist(intToCoord(grid, neighbourInt), intToCoord(grid, int)) !== 1) {
-                throw new Error('Got crazy result');
-            }
-
-            from.set(neighbourInt, int);
-
-            const cell = grid[neighbour.y][neighbour.x];
-            if (endCondition(neighbour, cell)) {
-                return produceFromPath(grid, from, neighbourInt);
-                // .filter(pos => pos.x !== startPos.x || pos.y !== startPos.y);
-            } else if (walkableCondition(neighbour, cell)) {
-                queue.push(neighbour);
-            } else {
-                // Not end condition or walkable, so exit
-                continue;
-            }
-        }
-    }
-
-    return false;
-};
-
-const fillClaiming = (grid, fromPos, id, agents) => {
-    const trail = floodFillGridFrom(grid, fromPos, c => c.claiming === id);
-    for (const pos of trail) {
-        grid[pos.y][pos.x].claiming = null;
-        grid[pos.y][pos.x].claimed = id;
-    }
-
-    return trail.length + findFloodRegion(grid, id, agents);
-};
-
 const clearBoardOfId = (grid, id) => {
     for (const row of grid) {
         for (const cell of row) {
@@ -287,122 +62,6 @@ const clearBoardOfId = (grid, id) => {
             }
         }
     }
-};
-
-const findFloodRegion = (grid, id, agents) => {
-    const seen = new Set();
-
-    let total = 0;
-
-    const myAgent = agents.find(a => a.id === id);
-
-    if (!myAgent) {
-        return;
-    }
-
-    const loX = Math.max(0, myAgent.claimBound.minX - 1);
-    const hiX = Math.min(grid[0].length - 1, myAgent.claimBound.maxX + 1);
-    const loY = Math.max(0, myAgent.claimBound.minY - 1);
-    const hiY = Math.min(grid.length - 1, myAgent.claimBound.maxY + 1);
-
-    for (let r = loY; r <= hiY; r++) {
-        for (let c = loX; c <= hiX; c++) {
-            if (grid[r][c].claimed === id) {
-                continue;
-            }
-
-            const int = coordToInt(grid, { x: c, y: r });
-
-            if (seen.has(int)) {
-                continue;
-            }
-
-            const connected = floodFillGridFrom(
-                grid,
-                { x: c, y: r },
-                c => {
-                    return c.claimed !== id;
-                },
-            );
-
-            connected.forEach(pos => {
-                seen.add(coordToInt(grid, pos));
-            });
-
-            if (connected.some(pos => isEdge(grid, pos))) {
-                // Not claiming
-            } else {
-                total += connected.length;
-                connected.forEach(pos => {
-                    grid[pos.y][pos.x] = { claimed: id, claiming: null };
-
-                    agents.forEach(agent => {
-                        if (agent.id === id) {
-                            return;
-                        }
-
-                        if (pos.x === agent.pos.x && pos.y === agent.pos.y) {
-                            agent.dead = true;
-                        }
-                    })
-                });
-            }
-        }
-    }
-
-    return total;
-};
-
-const floodToEmptySpaces = (grid, minRequiredDistance) => {
-    const newGrid = [];
-
-    for (let r = 0; r < grid.length; r++) {
-        const row = [];
-        newGrid.push(row);
-
-        for (let c = 0; c < grid[r].length; c++) {
-            row.push(false);
-        }
-    }
-
-    const queue = new DoubleEndedQueue();
-    const seen = new Set();
-
-    for (let r = 0; r < grid.length; r++) {
-        for (let c = 0; c < grid[r].length; c++) {
-            const cell = grid[r][c];
-
-            if (cell.claimed || cell.claiming) {
-                queue.push({ pos: { x: c, y: r }, steps: 0 });
-                seen.add(coordToInt(grid, { x: c, y: r }));
-                newGrid[r][c] = true;
-            }
-        }
-    }
-
-    while (!queue.empty()) {
-        const { pos, steps } = queue.pop();
-
-        newGrid[pos.y][pos.x] = true;
-
-        if (steps >= minRequiredDistance) {
-            continue;
-        }
-
-        for (const neighbourPos of getNeighbours(grid, pos)) {
-            const neighbourInt = coordToInt(grid, neighbourPos);
-
-            if (seen.has(neighbourInt)) {
-                continue;
-            }
-
-            seen.add(neighbourInt);
-
-            queue.push({ pos: neighbourPos, steps: steps + 1 });
-        }
-    }
-
-    return newGrid;
 };
 
 const manhattanDist = (pos1, pos2) => {
@@ -712,11 +371,12 @@ const mainFunction = () => {
 
     window.agentsMap = agentsMap;
 
-    const COUNT_COOLDOWN = 1000;
+    const COUNT_COOLDOWN = 500;
     const EMPTY_RANGE = 12;
     const CHAMPION_RANGE = 0.2;
 
     let lastCountTime = performance.now();
+    let spawnedThisCycle = false;
 
     let newGrid = floodToEmptySpaces(grid, EMPTY_RANGE);
 
@@ -726,7 +386,7 @@ const mainFunction = () => {
 
         const anyChampion = agents.some(agent => agent.owned > gameHeight * gameWidth * CHAMPION_RANGE);
 
-        if (agents.length < 16 && !anyChampion) {
+        if (agents.length < 16 && !anyChampion && !spawnedThisCycle) {
             const randomX = Math.floor(Math.random() * gameWidth);
             const randomY = Math.floor(Math.random() * gameHeight);
 
@@ -736,6 +396,8 @@ const mainFunction = () => {
                 agents.push(newAgent);
                 cell.claimed = newAgent.id;
                 agentsMap[newAgent.id] = newAgent;
+
+                spawnedThisCycle = true;
             }
         }
 
@@ -890,6 +552,7 @@ const mainFunction = () => {
 
         if (performance.now() - lastCountTime > COUNT_COOLDOWN) {
             newGrid = floodToEmptySpaces(grid, EMPTY_RANGE);
+            spawnedThisCycle = false;
 
             lastCountTime = performance.now();
 
@@ -980,7 +643,7 @@ const mainFunction = () => {
             ctx.fillText(`${owned}%`, boxLeft + boxHeight + padding, boxTop + boxHeight - 2 * padding);
 
             if (grid[Math.floor(mouse.y / GRID_SCALE)][Math.floor(mouse.x / GRID_SCALE)].claimed === agent.id) {
-                ctx.strokeStyle = 'blue';
+                ctx.strokeStyle = 'black';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(boxLeft, boxTop, boxWidth, boxHeight);
             }
