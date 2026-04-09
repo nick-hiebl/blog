@@ -78,11 +78,16 @@ class Bound {
             this.maxY -= 1;
         }
     }
+
+    contains(pos) {
+        return this.minX <= pos.x && pos.x <= this.maxX && this.minY <= pos.y && pos.y <= this.maxY;
+    }
 }
 
 const TIME_TO_MOVE = 100;
 
 const keyboardMap = {};
+const mouse = { x: 0, y: 0 };
 
 const addCoord = (a, b) => {
     return { x: a.x + b.x, y: a.y + b.y };
@@ -675,6 +680,13 @@ const GRID_SCALE = 10;
 
 const mainFunction = () => {
     const canvas = document.getElementById('canvas');
+
+    canvas.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = e.clientX - rect.left;
+        mouse.y = e.clientY - rect.top;
+    });
+
     const ctx = canvas.getContext('2d');
 
     const width = canvas.clientWidth;
@@ -897,28 +909,68 @@ const mainFunction = () => {
         const sortedAgents = agents.slice();
         sortedAgents.sort((a, b) => a.owned - b.owned);
 
+        // Draw leader crown
+        const leader = sortedAgents[sortedAgents.length - 1];
+        const midpoint = {
+            x: Math.floor((leader.overallBound.minX + leader.overallBound.maxX) / 2) + 0.5,
+            y: Math.floor((leader.overallBound.minY + leader.overallBound.maxY) / 2) + 0.5,
+        };
+
+        ctx.save();
+        ctx.translate(midpoint.x * GRID_SCALE, midpoint.y * GRID_SCALE);
+
+        ctx.fillStyle = leader.color;
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        const crownBottom = GRID_SCALE / 4;
+        // Corners
+        ctx.moveTo(GRID_SCALE, crownBottom);
+        ctx.lineTo(-GRID_SCALE, crownBottom);
+        ctx.lineTo(-GRID_SCALE, -GRID_SCALE);
+        ctx.lineTo(-GRID_SCALE / 2, -GRID_SCALE / 2);
+        ctx.lineTo(0, -GRID_SCALE);
+        ctx.lineTo(GRID_SCALE / 2, -GRID_SCALE / 2);
+        ctx.lineTo(GRID_SCALE, -GRID_SCALE);
+
+        ctx.lineTo(GRID_SCALE, crownBottom);
+
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
+
         for (let i = 0; i < sortedAgents.length; i++) {
-            const boxWidth = 104;
+            const agent = sortedAgents[i];
+
+            const boxWidth = 96;
             const padding = 4;
             const boxHeight = 32;
-            const boxLeft = width - boxWidth;
+            const boxLeft = width - boxWidth - 2 * padding;
             const boxTop = height - (boxHeight + padding * 2) * (i + 1);
 
             ctx.fillStyle = '#00000055';
-            ctx.fillRect(boxLeft, boxTop, boxWidth - 2 * padding, boxHeight);
+            ctx.fillRect(boxLeft, boxTop, boxWidth, boxHeight);
 
-            ctx.fillStyle = sortedAgents[i].color;
+            ctx.fillStyle = agent.color;
             ctx.fillRect(boxLeft + padding, boxTop + padding, boxHeight - 2 * padding, boxHeight - 2 * padding);
 
             ctx.fillStyle = '#ffffff88';
-            ctx.fillRect(boxLeft + boxHeight, boxTop + padding, boxWidth - 3 * padding - boxHeight, boxHeight - 2 * padding);
+            ctx.fillRect(boxLeft + boxHeight, boxTop + padding, boxWidth - padding - boxHeight, boxHeight - 2 * padding);
 
             ctx.font = '20px sans-serif';
             ctx.fillStyle = 'black';
 
-            const owned = Math.round(sortedAgents[i].owned / (gameWidth * gameHeight) * 100);
+            const owned = Math.round(agent.owned / (gameWidth * gameHeight) * 100);
 
             ctx.fillText(`${owned}%`, boxLeft + boxHeight + padding, boxTop + boxHeight - 2 * padding);
+
+            if (agent.overallBound.contains({ x: mouse.x / GRID_SCALE, y: mouse.y / GRID_SCALE})) {
+                ctx.strokeStyle = 'blue';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(boxLeft, boxTop, boxWidth, boxHeight);
+            }
         }
 
         requestAnimationFrame(draw);
