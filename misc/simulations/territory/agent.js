@@ -81,7 +81,12 @@ class Agent {
             nextCell.claiming = this.id;
         } else if (nextCell.claimed === this.id) {
             if (this.claimPathLength > 0) {
-                fillClaiming(this.grid, this.pos, this.id, this.agents);
+                const claim = fillClaiming(this.grid, this.pos, this.id, this.agents);
+
+                if (claim > 4) {
+                    claimChannel.playNote(200 + claim * 5, 80, 0.15);
+                }
+
                 this.claimPathLength = 0;
                 this.overallBound.join(this.claimBound);
                 this.claimBound.reset();
@@ -304,6 +309,7 @@ class Agent {
 
             if (flag) {
                 this.lastMovedTime = performance.now();
+                return true;
             }
         }
     }

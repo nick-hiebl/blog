@@ -1,4 +1,4 @@
-const TIME_TO_MOVE = 40;
+const TIME_TO_MOVE = 90;
 
 const keyboardMap = {};
 const mouse = { x: 0, y: 0 };
@@ -124,7 +124,7 @@ const mainFunction = () => {
 
     const COUNT_COOLDOWN = 500;
     const EMPTY_RANGE = 12;
-    const CHAMPION_RANGE = 0.2;
+    const CHAMPION_RANGE = 0.0002;
 
     let lastCountTime = performance.now();
     let spawnedThisCycle = false;
@@ -149,8 +149,14 @@ const mainFunction = () => {
             }
         }
 
+        let anyMoved = false;
         for (const agent of agents) {
-            agent.update();
+            const moved = agent.update();
+            anyMoved = moved || anyMoved;
+        }
+
+        if (anyMoved) {
+            // playNote(100, TIME_TO_MOVE, 0.05);
         }
 
         for (let i = agents.length - 1; i >= 0; i--) {
