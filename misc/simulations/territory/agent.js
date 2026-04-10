@@ -1,18 +1,26 @@
+const FIXED_COLORS = [
+    { hue: 1, s: 100, v: 30 },
+    { hue: 231, s: 100, v: 60 },
+    { hue: 271, s: 100, v: 60 },
+    { hue: 285, s: 100, v: 60 },
+    { hue: 0, s: 100, v: 60 },
+    { hue: 50, s: 100, v: 40 },
+    { hue: 205, s: 100, v: 60 },
+    { hue: 162, s: 100, v: 30 },
+    { hue: 102, s: 100, v: 40 },
+    { hue: 180, s: 100, v: 40 },
+];
+
 const findHue = agents => {
-    let hue = Math.floor(Math.random() * 360);
+    const availableHues = FIXED_COLORS.filter(c => !agents.some(agent => agent.hue === c.hue));
 
-    let trials = 0;
-    while (agents.some(other => Math.abs(other.hue - hue) < 25)) {
-        hue = Math.floor(Math.random() * 360);
-        trials++;
-
-        if (trials > 100) {
-            console.warn('HUE', hue, agents.map(a => a.hue));
-            return hue;
-        }
+    if (availableHues.length === 0) {
+        throw new Error('No colors left');
     }
 
-    return hue;
+    const color = availableHues[Math.floor(Math.random() * availableHues.length)];
+
+    return color;
 };
 
 const randInt = (lo, hi) => Math.floor(Math.random() * (hi - lo) + lo);
@@ -30,9 +38,8 @@ class Agent {
         this.pos = pos;
         this.strategy = strategy;
         
-        const hue = findHue(agents);
-        const saturation = randInt(50, 90);
-        const lightness = randInt(25, 45);
+        const { hue, s: saturation, v: lightness } = findHue(agents);
+        this.hue = hue;
         this.color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
         this.claimingColor = `hsla(${hue}, ${saturation}%, ${lightness}%, 50%)`;
 
