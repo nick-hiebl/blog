@@ -132,7 +132,7 @@ const mainFunction = () => {
     let newGrid = floodToEmptySpaces(grid, EMPTY_RANGE);
 
     const draw = () => {
-        ctx.fillStyle = 'white';
+        ctx.fillStyle = 'black';
         ctx.fillRect(0, 0, width, height);
 
         const anyChampion = agents.some(agent => agent.owned > gameHeight * gameWidth * CHAMPION_RANGE);
@@ -173,7 +173,7 @@ const mainFunction = () => {
 
         // Empty square pass
         ctx.beginPath();
-        ctx.fillStyle = '#eee';
+        ctx.fillStyle = '#181818';
         for (let r = 0; r < grid.length; r++) {
             const row = grid[r];
 
@@ -394,7 +394,7 @@ const mainFunction = () => {
             ctx.fillText(`${owned}%`, boxLeft + boxHeight + padding, boxTop + boxHeight - 2 * padding);
 
             if (grid[Math.floor(mouse.y / GRID_SCALE)][Math.floor(mouse.x / GRID_SCALE)].claimed === agent.id) {
-                ctx.strokeStyle = 'black';
+                ctx.strokeStyle = 'white';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(boxLeft, boxTop, boxWidth, boxHeight);
             }
