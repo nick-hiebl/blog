@@ -68,6 +68,27 @@ const clearBoardOfId = (grid, id) => {
     }
 };
 
+const stealTerritory = (grid, pos, forId, fromId) => {
+    const stolenSpots = floodFillWithConditions(grid, pos, (_coord, cell, _int) => {
+        // Allow tracking across user tail
+        return cell.claiming === forId
+            // Allow pathing through claimers own territory
+            || cell.claimed === forId
+            // Allow pathing through dead agent's territory
+            // In theory we add a range limit here eventually
+            || cell.claimed === fromId;
+    });
+
+    for (spot of stolenSpots) {
+        const cell = grid[spot.y][spot.x];
+        if (cell.claimed === fromId) {
+            cell.claimed = forId;
+            cell.deathAnim = 0;
+            cell.claimAnim = 1;
+        }
+    }
+};
+
 const manhattanDist = (pos1, pos2) => {
     return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y);
 };
@@ -155,23 +176,43 @@ const mainFunction = () => {
             }
         }
 
+        let anyDead = false;
+
+        function clearDead(claimerId, claimerPos) {
+            const kills = eventQueue.getAllWithKey('Kill');
+
+            for (let i = agents.length - 1; i >= 0; i--) {
+                const agent = agents[i];
+                if (agent.dead) {
+                    const killer = kills.find(event => event.other === agent.id);
+                    if (killer) {
+                        killer.timer = -1;
+                        stealTerritory(grid, agentsMap[killer.self].pos, killer.self, agent.id);
+                    }
+
+                    clearBoardOfId(grid, agent.id, claimerId, claimerPos);
+                    delete agentsMap[agent.id];
+
+                    agents.splice(i, 1);
+                }
+            }
+
+            eventQueue.update();
+        }
+
         for (const agent of agents) {
             if (agent.dead) {
                 continue;
             }
 
             agent.update();
-        }
 
-        let anyDead = false;
-        for (let i = agents.length - 1; i >= 0; i--) {
-            const agent = agents[i];
-            if (agent.dead) {
+            const claims = eventQueue.getAllWithKey('Claim');
+            claims.forEach(c => c.timer = 0);
+
+            if (agents.some(agent => agent.dead)) {
                 anyDead = true;
-                clearBoardOfId(grid, agent.id);
-                delete agentsMap[agent.id];
-
-                agents.splice(i, 1);
+                clearDead(agent.id, agent.pos);
             }
         }
 

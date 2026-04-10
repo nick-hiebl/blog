@@ -102,14 +102,6 @@ const findPathWithConditions = (grid, startPos, walkableCondition, endCondition)
                 continue;
             }
 
-            if (manhattanDist(neighbour, current) !== 1) {
-                throw new Error('Got crazy result');
-            }
-
-            if (manhattanDist(intToCoord(grid, neighbourInt), intToCoord(grid, int)) !== 1) {
-                throw new Error('Got crazy result');
-            }
-
             from.set(neighbourInt, int);
 
             const cell = grid[neighbour.y][neighbour.x];
@@ -126,6 +118,37 @@ const findPathWithConditions = (grid, startPos, walkableCondition, endCondition)
     }
 
     return false;
+};
+
+const floodFillWithConditions = (grid, startPos, walkableCondition) => {
+    const queue = new DoubleEndedQueue();
+    queue.push(startPos);
+    const seen = new Set();
+    const included = new Set();
+
+    while (!queue.empty()) {
+        const current = queue.pop();
+
+        const int = coordToInt(grid, current);
+
+        for (const neighbour of getNeighbours(grid, current)) {
+            const neighbourInt = coordToInt(grid, neighbour);
+
+            if (seen.has(neighbourInt)) {
+                continue;
+            }
+
+            seen.add(neighbourInt);
+
+            const cell = grid[neighbour.y][neighbour.x];
+            if (walkableCondition(neighbour, cell, neighbourInt)) {
+                queue.push(neighbour);
+                included.add(neighbourInt);
+            }
+        }
+    }
+
+    return Array.from(included).map(int => intToCoord(grid, int));
 };
 
 const fillClaiming = (grid, fromPos, id, agents) => {
@@ -263,3 +286,10 @@ const floodToEmptySpaces = (grid, minRequiredDistance) => {
 
     return newGrid;
 };
+
+const euclideanDistance = (pos1, pos2) => {
+    const xDiff = pos1.x - pos2.x;
+    const yDiff = pos1.y - pos2.y;
+
+    return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+}

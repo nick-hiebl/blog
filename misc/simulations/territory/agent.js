@@ -76,6 +76,9 @@ class Agent {
         if (nextCell.claiming) {
             if (nextCell.claiming === this.id) {
                 console.log('Overlapping own tail');
+            } else {
+                console.log('Kill event');
+                eventQueue.add({ key: 'Kill', timer: 1, self: this.id, other: nextCell.claiming });
             }
             this.agents.find(other => other.id === nextCell.claiming).dead = true;
             nextCell.claiming = this.id;
@@ -92,6 +95,9 @@ class Agent {
 
                     claimChannel.playNote(pitch, 80, 0.15);
                 }
+
+                eventQueue.add({ key: 'Claim', timer: 1, self: this.id });
+                eventQueue.add({ key: 'Boost', timer: 60 });
 
                 this.claimPathLength = 0;
                 this.overallBound.join(this.claimBound);
