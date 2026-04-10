@@ -19,7 +19,21 @@ class Channel {
         this.volume.gain.setTargetAtTime(gain, audioContext.currentTime, 0.02);
         this.oscillator.frequency.value = frequency;
 
-        this.volume.gain.setTargetAtTime(0, audioContext.currentTime + duration / 1000, 0.03);
+        this.volume.gain.setTargetAtTime(0, audioContext.currentTime + 0.02 + duration / 1000, 0.03);
+
+        if (!this.started) {
+            this.oscillator.start();
+            this.started = true;
+        }
+    }
+
+    playFallingNote(f1, f2, duration, gain) {
+        this.volume.gain.cancelScheduledValues(audioContext.currentTime);
+        this.volume.gain.setTargetAtTime(gain, audioContext.currentTime, 0.02);
+        this.oscillator.frequency.value = f1;
+        this.oscillator.frequency.linearRampToValueAtTime(f2, audioContext.currentTime + duration / 1000, 0.03);
+
+        this.volume.gain.setTargetAtTime(0, audioContext.currentTime + 0.02 + duration / 1000, 0.03);
 
         if (!this.started) {
             this.oscillator.start();
@@ -29,4 +43,6 @@ class Channel {
 }
 
 const claimChannel = new Channel('sine');
-const walkChannel = new Channel('square');
+const walkChannel = new Channel('triangle');
+const deadChannel = new Channel('square');
+const successChannel = new Channel('triangle');

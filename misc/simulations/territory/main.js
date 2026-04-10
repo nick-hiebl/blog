@@ -1,4 +1,4 @@
-const TIME_TO_MOVE = 90;
+const TIME_TO_MOVE = 40;
 
 const keyboardMap = {};
 const mouse = { x: 0, y: 0 };
@@ -156,17 +156,23 @@ const mainFunction = () => {
         }
 
         if (anyMoved) {
-            // walkChannel.playNote(100, 20, 0.03);
+            // walkChannel.playNote(100, 20, 0.05);
         }
 
+        let anyDead = false;
         for (let i = agents.length - 1; i >= 0; i--) {
             const agent = agents[i];
             if (agent.dead) {
+                anyDead = true;
                 clearBoardOfId(grid, agent.id);
                 delete agentsMap[agent.id];
 
                 agents.splice(i, 1);
             }
+        }
+
+        if (anyDead) {
+            deadChannel.playFallingNote(200, 40, 200, 0.025);
         }
 
         for (const agent of agents) {

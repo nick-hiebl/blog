@@ -221,6 +221,9 @@ class Agent {
                     }
                 } else {
                     if (distToCenter.y === 0) {
+                        if (!successChannel.started) {
+                            successChannel.playFallingNote(440, 440 * 4, 640, 0.1);
+                        }
                         return false;
                     }
 
