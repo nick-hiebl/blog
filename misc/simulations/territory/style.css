@@ -2,8 +2,32 @@ body {
     font-family: sans-serif;
     background-color: black;
     color: white;
+    font-size: 2.5em;
 }
 
 canvas {
-    border: 1px solid black;
+    border: 1px solid white;
+}
+
+h1 {
+    /* font-size: 6em; */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+}
+
+#title-box {
+    position: absolute;
+    left: 9px;
+    top: 9px;
+    height: 360px;
+    width: 1080px;
+
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+
+    /* border: 2px solid red; */
+    box-sizing: border-box;
 }

@@ -1,4 +1,4 @@
-const TIME_TO_MOVE = 100;
+const TIME_TO_MOVE = 40;
 
 const keyboardMap = {};
 const mouse = { x: 0, y: 0 };
@@ -102,8 +102,8 @@ const mainFunction = () => {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
 
-    const gameWidth = Math.floor(width / GRID_SCALE);
-    const gameHeight = Math.floor(height / GRID_SCALE);
+    const gameWidth = 32; // Math.floor(width / GRID_SCALE);
+    const gameHeight = 40; // Math.floor(height / GRID_SCALE);
 
     const grid = createGrid(gameWidth, gameHeight);
 
@@ -228,10 +228,6 @@ const mainFunction = () => {
     };
 
     const draw = () => {
-        /** DRAW Phase */
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, width, height);
-
         const rectInGrid = (x, y) => {
             ctx.rect(x * GRID_SCALE + 1, y * GRID_SCALE + 1, GRID_SCALE - 2, GRID_SCALE - 2);
         };
@@ -369,18 +365,27 @@ const mainFunction = () => {
 
             ctx.restore();
         }
+    };
 
+    const textBoxWidth = 400;
+    const textBoxHeight = 300;
 
-        for (let i = 0; i < sortedAgents.length; i++) {
+    const statScreenDraw = (maxItems = 8) => {
+        const sortedAgents = agents.slice();
+        sortedAgents.sort((a, b) => b.owned - a.owned);
+
+        for (let i = 0; i < sortedAgents.length && i < maxItems; i++) {
             const agent = sortedAgents[i];
 
-            const boxWidth = 96;
-            const padding = 4;
-            const boxHeight = 32;
-            const boxLeft = width - boxWidth - 2 * padding;
-            const boxTop = height - (boxHeight + padding * 2) * (i + 1);
+            const padding = 8;
+            const boxHeight = 48;
+            const boxWidth = textBoxWidth / 2 - padding;
+            const boxLeft = sortedAgents.length === 1
+                ? textBoxWidth / 2 - boxWidth / 2
+                : (i % 2 ? boxWidth + 2 * padding : 0);
+            const boxTop = (boxHeight + padding * 2) * Math.floor(i / 2) + padding * 2;
 
-            ctx.fillStyle = '#00000055';
+            ctx.fillStyle = '#fff';
             ctx.fillRect(boxLeft, boxTop, boxWidth, boxHeight);
 
             ctx.fillStyle = agent.color;
@@ -389,12 +394,12 @@ const mainFunction = () => {
             ctx.fillStyle = '#ffffff88';
             ctx.fillRect(boxLeft + boxHeight, boxTop + padding, boxWidth - padding - boxHeight, boxHeight - 2 * padding);
 
-            ctx.font = '20px sans-serif';
-            ctx.fillStyle = 'black';
+            ctx.font = 'bold 32px Segoe UI';
+            ctx.fillStyle = agent.color;
 
             const owned = Math.round(agent.owned / (gameWidth * gameHeight) * 100);
 
-            ctx.fillText(`${owned}%`, boxLeft + boxHeight + padding, boxTop + boxHeight - 2 * padding);
+            ctx.fillText(`${owned}%`, boxLeft + boxHeight + padding, boxTop + boxHeight - 1.5 * padding);
 
             if (grid[Math.floor(mouse.y / GRID_SCALE)]?.[Math.floor(mouse.x / GRID_SCALE)]?.claimed === agent.id) {
                 ctx.strokeStyle = 'white';
@@ -404,9 +409,42 @@ const mainFunction = () => {
         }
     };
 
+    const innerScale = 3;
+
+    const innerScreenWidth = gameWidth * GRID_SCALE * innerScale;
+    const innerScreenHeight = gameHeight * GRID_SCALE * innerScale;
+
+    const mainDraw = () => {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.save();
+        ctx.translate(
+            width / 2 - innerScreenWidth / 2,
+            height / 2 - innerScreenHeight / 2,
+        );
+
+        ctx.scale(innerScale, innerScale);
+
+        draw();
+
+        ctx.restore();
+
+        const bottomOfScreen = height / 2 + innerScreenHeight / 2;
+
+        ctx.save();
+        ctx.translate(width / 2 - textBoxWidth / 2, bottomOfScreen / 2 + height / 2 - textBoxHeight / 2);
+        statScreenDraw();
+        ctx.restore();
+
+        // ctx.fillStyle = 'red';
+        // ctx.fillRect(width / 2 - 1 + 100, 0, 2, height);
+        // ctx.fillRect(width / 2 - 1 - 100, 0, 2, height);
+    };
+
     const mainLoop = () => {
         update();
-        draw();
+        mainDraw();
 
         requestAnimationFrame(mainLoop);
     }

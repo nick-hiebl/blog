@@ -2,7 +2,7 @@ const findHue = agents => {
     let hue = Math.floor(Math.random() * 360);
 
     let trials = 0;
-    while (agents.some(other => Math.abs(other.hue - hue) < 10)) {
+    while (agents.some(other => Math.abs(other.hue - hue) < 25)) {
         hue = Math.floor(Math.random() * 360);
         trials++;
 
@@ -32,7 +32,7 @@ class Agent {
         
         const hue = findHue(agents);
         const saturation = randInt(50, 90);
-        const lightness = randInt(25, 60);
+        const lightness = randInt(25, 45);
         this.color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
         this.claimingColor = `hsla(${hue}, ${saturation}%, ${lightness}%, 50%)`;
 
@@ -193,6 +193,29 @@ class Agent {
         if (isMyHome(this.id)(this.pos, currentCell)) {
             if (this.owned === this.grid[0].length * this.grid.length) {
                 // Agent owns the whole board, so skip this step
+                const center = {
+                    x: this.grid[0].length / 2,
+                    y: this.grid.length / 2,
+                };
+
+                const distToCenter = {
+                    x: center.x - this.pos.x,
+                    y: center.y - this.pos.y,
+                };
+
+                if (Math.abs(distToCenter.x) > Math.abs(distToCenter.y)) {
+                    if (this.resolveMove({ x: this.pos.x + (distToCenter.x > 0 ? 1 : -1), y: this.pos.y })) {
+                        return true;
+                    }
+                } else {
+                    if (distToCenter.y === 0) {
+                        return false;
+                    }
+
+                    if (this.resolveMove({ x: this.pos.x, y: this.pos.y + (distToCenter.y > 0 ? 1 : -1) })) {
+                        return true;
+                    }
+                }
             } else {
                 // Try to get to unclaimed territory
                 const explorePath = findPathWithConditions(
@@ -259,7 +282,17 @@ class Agent {
 
         const moveTime = this.timeToMove * (keyboardMap[' '] ? 0.2 : 1);
 
-        if (timeSinceLastMove > moveTime) {
+        const countMultiplier = this.agents.length === 3
+            ? 0.8
+            : this.agents.length === 2
+                ? manhattanDist(this.agents[0].pos, this.agents[1].pos) < 6
+                    ? 1
+                    : 0.5
+                : this.agents.length === 1
+                    ? 0.3
+                    : 1;
+
+        if (timeSinceLastMove > moveTime * countMultiplier) {
             const flag = this.tryMove();
 
             if (flag) {
