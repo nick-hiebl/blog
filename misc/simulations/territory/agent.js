@@ -99,7 +99,9 @@ class Agent {
                 }
 
                 eventQueue.add({ key: 'Claim', timer: 1, self: this.id });
-                eventQueue.add({ key: 'Boost', timer: 60 });
+                if (claimSize > 5) {
+                    eventQueue.add({ key: 'Boost', timer: 60, self: this.id, max: 60 });
+                }
 
                 this.claimPathLength = 0;
                 this.overallBound.join(this.claimBound);

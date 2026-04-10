@@ -457,10 +457,13 @@ const mainFunction = () => {
 
     const textBoxWidth = 400;
     const textBoxHeight = 300;
+    const maxItems = 8;
 
-    const statScreenDraw = (maxItems = 8) => {
+    const statScreenDraw = () => {
         const sortedAgents = agents.slice();
         sortedAgents.sort((a, b) => b.owned - a.owned);
+
+        const boosts = eventQueue.getAllWithKey('Boost');
 
         for (let i = 0; i < sortedAgents.length && i < maxItems; i++) {
             const agent = sortedAgents[i];
@@ -473,14 +476,37 @@ const mainFunction = () => {
                 : (i % 2 ? boxWidth + 2 * padding : 0);
             const boxTop = (boxHeight + padding * 2) * Math.floor(i / 2) + padding * 2;
 
+            const cornerRounding = 5;
+
+            const myBoosts = boosts.filter(b => b.self === agent.id);
+
+            let factor = 0;
+
+            myBoosts.forEach(boost => {
+                factor = Math.max(factor, boost.timer / boost.max);
+            });
+
+            ctx.save();
+            ctx.translate(boxLeft + boxWidth / 2, boxTop + boxHeight / 2);
+
+            if (factor > 0) {
+                // console.log(bestBoost);
+                ctx.scale(1 + factor / 20, 1 + factor / 20);
+            }
+
             ctx.fillStyle = '#fff';
-            ctx.fillRect(boxLeft, boxTop, boxWidth, boxHeight);
+            ctx.beginPath();
+            drawRoundedRectangle(ctx, -boxWidth / 2, -boxHeight / 2, boxWidth, boxHeight, cornerRounding);
+            ctx.fill();
+            // ctx.arc(boxLeft + boxWidth - cornerRounding, boxTop + boxHeight - cornerRounding)
+            // ctx.fillRect(boxLeft, boxTop, boxWidth, boxHeight);
 
             ctx.fillStyle = agent.color;
-            ctx.fillRect(boxLeft + padding, boxTop + padding, boxHeight - 2 * padding, boxHeight - 2 * padding);
+            // ctx.fillRect(boxLeft + padding, boxTop + padding, boxHeight - 2 * padding, boxHeight - 2 * padding);
+            ctx.fillRect(-boxWidth / 2 + padding, -boxHeight / 2 + padding, boxHeight - 2 * padding, boxHeight - 2 * padding);
 
-            ctx.fillStyle = '#ffffff88';
-            ctx.fillRect(boxLeft + boxHeight, boxTop + padding, boxWidth - padding - boxHeight, boxHeight - 2 * padding);
+            // ctx.fillStyle = '#ffffff88';
+            // ctx.fillRect(boxLeft + boxHeight, boxTop + padding, boxWidth - padding - boxHeight, boxHeight - 2 * padding);
 
             ctx.font = 'bold 32px Segoe UI';
             // ctx.fillStyle = agent.color;
@@ -488,13 +514,10 @@ const mainFunction = () => {
 
             const owned = Math.round(agent.owned / (gameWidth * gameHeight) * 100);
 
-            ctx.fillText(`${owned}%`, boxLeft + boxHeight + padding, boxTop + boxHeight - 1.5 * padding);
+            // ctx.fillText(`${owned}%`, boxLeft + boxHeight + padding, boxTop + boxHeight - 1.5 * padding);
+            ctx.fillText(`${owned}%`, -boxWidth / 2 + boxHeight + padding, -boxHeight / 2 + boxHeight - 1.5 * padding);
 
-            if (grid[Math.floor(mouse.y / GRID_SCALE)]?.[Math.floor(mouse.x / GRID_SCALE)]?.claimed === agent.id) {
-                ctx.strokeStyle = 'white';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(boxLeft, boxTop, boxWidth, boxHeight);
-            }
+            ctx.restore();
         }
     };
 
@@ -542,6 +565,8 @@ const mainFunction = () => {
         mainDraw(elapsed);
 
         requestAnimationFrame(mainLoop);
+
+        eventQueue.update(elapsed);
 
         lastTime = now;
     }
