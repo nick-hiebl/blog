@@ -124,7 +124,7 @@ const mainFunction = () => {
 
     const COUNT_COOLDOWN = 500;
     const EMPTY_RANGE = 12;
-    const CHAMPION_RANGE = 0.0002;
+    const CHAMPION_RANGE = 0.2;
 
     let lastCountTime = performance.now();
     let spawnedThisCycle = false;
@@ -156,7 +156,7 @@ const mainFunction = () => {
         }
 
         if (anyMoved) {
-            // playNote(100, TIME_TO_MOVE, 0.05);
+            // walkChannel.playNote(100, 20, 0.03);
         }
 
         for (let i = agents.length - 1; i >= 0; i--) {
@@ -455,7 +455,9 @@ const mainFunction = () => {
         requestAnimationFrame(mainLoop);
     }
 
-    requestAnimationFrame(mainLoop);
+    setTimeout(() => {
+        requestAnimationFrame(mainLoop);
+    }, 500);
 };
 
 document.addEventListener('DOMContentLoaded', mainFunction);
