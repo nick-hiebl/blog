@@ -126,6 +126,8 @@ const floodFillWithConditions = (grid, startPos, walkableCondition) => {
     const seen = new Set();
     const included = new Set();
 
+    included.add(coordToInt(grid, startPos));
+
     while (!queue.empty()) {
         const current = queue.pop();
 
@@ -148,19 +150,35 @@ const floodFillWithConditions = (grid, startPos, walkableCondition) => {
         }
     }
 
-    return Array.from(included).map(int => intToCoord(grid, int));
+    return {
+        included,
+        coords: Array.from(included).map(int => intToCoord(grid, int)),
+    };
 };
 
 const fillClaiming = (grid, fromPos, id, agents) => {
+    const myImpactedAgents = new Set();
     const trail = floodFillGridFrom(grid, fromPos, c => c.claiming === id);
     for (const pos of trail) {
+        myImpactedAgents.add(grid[pos.y][pos.x].claimed);
+
         grid[pos.y][pos.x].claiming = null;
         grid[pos.y][pos.x].claimed = id;
         grid[pos.y][pos.x].claimAnim = 1;
         grid[pos.y][pos.x].deathAnim = 0;
     }
 
-    return trail.length + findFloodRegion(grid, id, agents);
+    myImpactedAgents.delete(null);
+
+    const { count, impactedAgents } = findFloodRegion(grid, id, agents);
+
+    // return trail.length + findFloodRegion(grid, id, agents);
+
+    for (const v of Array.from(impactedAgents)) {
+        myImpactedAgents.add(v);
+    }
+
+    return { count: count + trail.length, impactedAgents: myImpactedAgents };
 };
 
 const findFloodRegion = (grid, id, agents) => {
@@ -178,6 +196,8 @@ const findFloodRegion = (grid, id, agents) => {
     const hiX = Math.min(grid[0].length - 1, myAgent.claimBound.maxX + 1);
     const loY = Math.max(0, myAgent.claimBound.minY - 1);
     const hiY = Math.min(grid.length - 1, myAgent.claimBound.maxY + 1);
+
+    const impactedAgents = new Set();
 
     for (let r = loY; r <= hiY; r++) {
         for (let c = loX; c <= hiX; c++) {
@@ -213,6 +233,9 @@ const findFloodRegion = (grid, id, agents) => {
                         agents.find(a => a.id === currentCell.claiming).dead = true;
                     }
 
+                    impactedAgents.add(currentCell.claiming);
+                    impactedAgents.add(currentCell.claimed);
+
                     currentCell.claimed = id;
                     currentCell.claiming = null;
                     currentCell.claimAnim = 1;
@@ -232,8 +255,84 @@ const findFloodRegion = (grid, id, agents) => {
         }
     }
 
-    return total;
+    impactedAgents.delete(id);
+    impactedAgents.delete(null);
+
+    return { count: total, impactedAgents };
 };
+
+const stealAndRemoveNonContiguous = (grid, id, agents, impacted) => {
+    const seen = new Set();
+
+    const thiefAgent = agents.find(a => a.id === id);
+
+    if (!thiefAgent) {
+        return;
+    }
+
+    const loX = Math.max(0, thiefAgent.claimBound.minX - 1);
+    const hiX = Math.min(grid[0].length - 1, thiefAgent.claimBound.maxX + 1);
+    const loY = Math.max(0, thiefAgent.claimBound.minY - 1);
+    const hiY = Math.min(grid.length - 1, thiefAgent.claimBound.maxY + 1);
+
+    // for (let r = loY; r <= hiY; r++) {
+    //     for (let c = loX; c <= hiX; c++) {
+    for (let r = 0; r < grid.length; r++) {
+        for (let c = 0; c < grid[r].length; c++) {
+            const pos = { x: c, y: r };
+            const int = coordToInt(grid, pos);
+
+            if (seen.has(int)) {
+                continue;
+            }
+
+            const cell = grid[r][c];
+
+            // Ignore unclaimed or own territory or unimpacted territory
+            if (cell.claimed === null || cell.claimed === id) {
+                continue;
+            }
+
+            const myAgent = agents.find(a => a.id === cell.claimed);
+            const agentInt = coordToInt(grid, myAgent.pos);
+
+            const { coords, included } = floodFillWithConditions(grid, pos, (_coord, cell, int) => {
+                return cell.claiming === myAgent.id
+                    || cell.claimed === myAgent.id
+                    || int === agentInt;
+            });
+
+            if (included.has(agentInt)) {
+                // Still connected, move on
+                for (const v of Array.from(included)) {
+                    seen.add(v);
+                }
+                continue;
+            } else {
+                for (const spot of coords) {
+                    const cell = grid[spot.y][spot.x];
+
+                    if (euclideanDistance(spot, thiefAgent.pos) < 9) {
+                        cell.deathAnim = 0;
+                        cell.claimAnim = 1;
+                        cell.claimed = id;
+                        cell.claiming = null;
+                        thiefAgent.overallBound.insert(spot);
+                    } else {
+                        cell.deathAnim = 1;
+                        cell.claimAnim = 0;
+                        cell.claimed = null;
+                        cell.claiming = null;
+                    }
+                }
+
+                for (const v of Array.from(included)) {
+                    seen.add(v);
+                }
+            }
+        }
+    }
+}
 
 const floodToEmptySpaces = (grid, minRequiredDistance) => {
     const newGrid = [];

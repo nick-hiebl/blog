@@ -31,7 +31,7 @@ const intToCoord = (grid, int) => {
 };
 
 const isEdge = (grid, cell) => {
-    return cell.x === 0 || cell.y === 0 || cell.x === grid[0].length - 1 || cell.y === grid.length;
+    return cell.x === 0 || cell.y === 0 || cell.x === grid[0].length - 1 || cell.y === grid.length - 1;
 };
 
 function shuffle(array) {
@@ -68,12 +68,12 @@ const clearBoardOfId = (grid, id) => {
     }
 };
 
-const stealTerritory = (grid, pos, forId, fromId) => {
-    const stolenSpots = floodFillWithConditions(grid, pos, (_coord, cell, _int) => {
+const stealTerritory = (grid, killer, fromId) => {
+    const { coords: stolenSpots } = floodFillWithConditions(grid, killer.pos, (_coord, cell, _int) => {
         // Allow tracking across user tail
-        return cell.claiming === forId
+        return cell.claiming === killer.id
             // Allow pathing through claimers own territory
-            || cell.claimed === forId
+            || cell.claimed === killer.id
             // Allow pathing through dead agent's territory
             // In theory we add a range limit here eventually
             || cell.claimed === fromId;
@@ -82,9 +82,10 @@ const stealTerritory = (grid, pos, forId, fromId) => {
     for (spot of stolenSpots) {
         const cell = grid[spot.y][spot.x];
         if (cell.claimed === fromId) {
-            cell.claimed = forId;
+            cell.claimed = killer.id;
             cell.deathAnim = 0;
             cell.claimAnim = 1;
+            killer.overallBound.insert(spot);
         }
     }
 };
@@ -176,8 +177,6 @@ const mainFunction = () => {
             }
         }
 
-        let anyDead = false;
-
         function clearDead(claimerId, claimerPos) {
             const kills = eventQueue.getAllWithKey('Kill');
 
@@ -187,7 +186,7 @@ const mainFunction = () => {
                     const killer = kills.find(event => event.other === agent.id);
                     if (killer) {
                         killer.timer = -1;
-                        stealTerritory(grid, agentsMap[killer.self].pos, killer.self, agent.id);
+                        stealTerritory(grid, agentsMap[killer.self], agent.id);
                     }
 
                     clearBoardOfId(grid, agent.id, claimerId, claimerPos);
@@ -199,6 +198,8 @@ const mainFunction = () => {
 
             eventQueue.update();
         }
+
+        let anyDead = false;
 
         for (const agent of agents) {
             if (agent.dead) {
@@ -482,7 +483,8 @@ const mainFunction = () => {
             ctx.fillRect(boxLeft + boxHeight, boxTop + padding, boxWidth - padding - boxHeight, boxHeight - 2 * padding);
 
             ctx.font = 'bold 32px Segoe UI';
-            ctx.fillStyle = agent.color;
+            // ctx.fillStyle = agent.color;
+            ctx.fillStyle = 'black';
 
             const owned = Math.round(agent.owned / (gameWidth * gameHeight) * 100);
 
@@ -529,14 +531,23 @@ const mainFunction = () => {
         // ctx.fillRect(width / 2 - 1 - 100, 0, 2, height);
     };
 
+    let lastTime = null;
+
     const mainLoop = () => {
-        update();
-        mainDraw();
+        const now = performance.now();
+
+        const elapsed = now - lastTime;
+
+        update(elapsed);
+        mainDraw(elapsed);
 
         requestAnimationFrame(mainLoop);
+
+        lastTime = now;
     }
 
     setTimeout(() => {
+        lastTime = performance.now();
         requestAnimationFrame(mainLoop);
     }, 500);
 };

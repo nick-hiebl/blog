@@ -4,7 +4,7 @@ const FIXED_COLORS = [
     { hue: 271, s: 100, v: 60 },
     { hue: 285, s: 100, v: 60 },
     { hue: 0, s: 100, v: 60 },
-    { hue: 50, s: 100, v: 40 },
+    { hue: 50, s: 100, v: 50 },
     { hue: 205, s: 100, v: 60 },
     { hue: 162, s: 100, v: 30 },
     { hue: 102, s: 100, v: 40 },
@@ -84,11 +84,13 @@ class Agent {
             nextCell.claiming = this.id;
         } else if (nextCell.claimed === this.id) {
             if (this.claimPathLength > 0) {
-                const claim = fillClaiming(this.grid, this.pos, this.id, this.agents);
+                const { count: claimSize, impactedAgents } = fillClaiming(this.grid, this.pos, this.id, this.agents);
 
-                if (claim > 4) {
+                stealAndRemoveNonContiguous(this.grid, this.id, this.agents, impactedAgents);
+
+                if (claimSize > 4) {
                     const gridSize = this.grid.length * this.grid[0].length;
-                    const claimScore = Math.sqrt(claim / gridSize);
+                    const claimScore = Math.sqrt(claimSize / gridSize);
                     const sizeScore = this.owned / gridSize;
 
                     const pitch = (claimScore + sizeScore) / 2;
