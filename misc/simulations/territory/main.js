@@ -82,10 +82,16 @@ const stealTerritory = (grid, killer, fromId) => {
     for (spot of stolenSpots) {
         const cell = grid[spot.y][spot.x];
         if (cell.claimed === fromId) {
-            cell.claimed = killer.id;
-            cell.deathAnim = 0;
-            cell.claimAnim = 1;
-            killer.overallBound.insert(spot);
+            if (euclideanDistance(killer.pos, spot) < 20) {
+                cell.claimed = killer.id;
+                killer.overallBound.insert(spot);
+                cell.deathAnim = 0;
+                cell.claimAnim = 1;
+            } else {
+                cell.claimed = null;
+                cell.deathAnim = 1;
+                cell.claimAnim = 0;
+            }
         }
     }
 };
