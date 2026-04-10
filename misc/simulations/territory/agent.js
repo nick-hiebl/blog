@@ -237,6 +237,7 @@ class Agent {
                     }
                 } else {
                     if (distToCenter.y === 0) {
+                        this.champion = true;
                         if (!successChannel.started) {
                             successChannel.playFallingNote(440, 440 * 4, 640, 0.1);
                         }

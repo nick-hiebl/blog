@@ -410,20 +410,7 @@ const mainFunction = () => {
             // );
         }
 
-        const sortedAgents = agents.slice();
-        sortedAgents.sort((a, b) => a.owned - b.owned);
-
-        const crowns = [
-            { color: 'gold', agent: sortedAgents[sortedAgents.length - 1] },
-            { color: 'silver', agent: sortedAgents[sortedAgents.length - 2] },
-            { color: '#cd7f32', agent: sortedAgents[sortedAgents.length - 3] },
-        ];
-
-        for (const { color: crownColor, agent } of crowns) {
-            if (!agent) {
-                continue;
-            }
-
+        for (const agent of agents.filter(agent => agent.champion)) {
             // Draw leader crown
             const leader = agent;
 
@@ -433,7 +420,7 @@ const mainFunction = () => {
             ctx.strokeStyle = 'black';
             ctx.lineWidth = 2;
 
-            ctx.fillStyle = crownColor;
+            ctx.fillStyle = 'gold';
             ctx.beginPath();
 
             const crownBottom = GRID_SCALE / 4;
