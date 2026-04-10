@@ -161,6 +161,9 @@ class Agent {
         }
 
         if (this.claimPathLength > 10 || (this.claimPathLength > 0 && this.claimPathLength >= closestDist)) {
+            if (this.claimPathLength >= closestDist) {
+                console.log('Will try to return home as enemy is close!');
+            }
             const pathHome = findPathWithConditions(this.grid, this.pos, notMyTrail(this.id), isMyHome(this.id));
 
             if (!pathHome) {
@@ -179,7 +182,25 @@ class Agent {
                 // Agent owns the whole board, so skip this step
             } else {
                 // Try to get to unclaimed territory
-                const explorePath = findPathWithConditions(this.grid, this.pos, () => true, (_, cell) => cell.claimed !== this.id);
+                const explorePath = findPathWithConditions(
+                    this.grid,
+                    this.pos,
+                    () => true,
+                    (pos, cell) => {
+                        if (cell.claimed === this.id) {
+                            return false;
+                        }
+
+                        // Check that the spot is not too close to an enemy
+                        return !this.agents.some(agent => {
+                            if (agent.id === this.id) {
+                                return false;
+                            }
+
+                            return manhattanDist(pos, agent.pos) < 5;
+                        });
+                    },
+                );
 
                 if (!explorePath) {
                     console.warn('This agent could not find a path to new territory', explorePath);
@@ -223,7 +244,9 @@ class Agent {
         const time = performance.now();
         const timeSinceLastMove = time - this.lastMovedTime;
 
-        if (timeSinceLastMove > this.timeToMove) {
+        const moveTime = this.timeToMove * (keyboardMap[' '] ? 0.2 : 1);
+
+        if (timeSinceLastMove > moveTime) {
             const flag = this.tryMove();
 
             if (flag) {
