@@ -84,7 +84,7 @@ class Agent {
                 const claim = fillClaiming(this.grid, this.pos, this.id, this.agents);
 
                 if (claim > 4) {
-                    claimChannel.playNote(200 + claim * 5, 80, 0.15);
+                    claimChannel.playNote(200 + claim * 5 + this.owned / 4, 80, 0.15);
                 }
 
                 this.claimPathLength = 0;
@@ -297,15 +297,17 @@ class Agent {
 
         const moveTime = this.timeToMove * (keyboardMap[' '] ? 0.2 : 1);
 
-        const countMultiplier = this.agents.length === 3
-            ? 0.8
-            : this.agents.length === 2
-                ? manhattanDist(this.agents[0].pos, this.agents[1].pos) < 6
-                    ? 1
-                    : 0.5
-                : this.agents.length === 1
-                    ? 0.3
-                    : 1;
+        const countMultiplier = 0.1 + 0.9 * Math.exp(-Math.pow(this.owned / 1000, 3));
+
+        // const countMultiplier = this.agents.length === 3
+        //     ? 0.8
+        //     : this.agents.length === 2
+        //         ? manhattanDist(this.agents[0].pos, this.agents[1].pos) < 6
+        //             ? 1
+        //             : 0.5
+        //         : this.agents.length === 1
+        //             ? 0.3
+        //             : 1;
 
         if (timeSinceLastMove > moveTime * countMultiplier) {
             const flag = this.tryMove();
