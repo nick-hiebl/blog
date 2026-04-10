@@ -46,6 +46,7 @@ class Channel {
 }
 
 const claimChannel = new Channel('sine');
-const walkChannel = new Channel('triangle');
 const deadChannel = new Channel('square');
 const successChannel = new Channel('triangle');
+
+const bigUpChannel = new Channel('sine');

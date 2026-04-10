@@ -275,6 +275,8 @@ const stealAndRemoveNonContiguous = (grid, id, agents, impacted) => {
     const loY = Math.max(0, thiefAgent.claimBound.minY - 1);
     const hiY = Math.min(grid.length - 1, thiefAgent.claimBound.maxY + 1);
 
+    let stealing = 0;
+
     // for (let r = loY; r <= hiY; r++) {
     //     for (let c = loX; c <= hiX; c++) {
     for (let r = 0; r < grid.length; r++) {
@@ -312,12 +314,13 @@ const stealAndRemoveNonContiguous = (grid, id, agents, impacted) => {
                 for (const spot of coords) {
                     const cell = grid[spot.y][spot.x];
 
-                    if (euclideanDistance(spot, thiefAgent.pos) < 9) {
+                    if (euclideanDistance(spot, thiefAgent.pos) < 11) {
                         cell.deathAnim = 0;
                         cell.claimAnim = 1;
                         cell.claimed = id;
                         cell.claiming = null;
                         thiefAgent.overallBound.insert(spot);
+                        stealing += 1;
                     } else {
                         cell.deathAnim = 1;
                         cell.claimAnim = 0;
@@ -331,6 +334,10 @@ const stealAndRemoveNonContiguous = (grid, id, agents, impacted) => {
                 }
             }
         }
+    }
+
+    if (stealing > 10) {
+        bigUpChannel.playFallingNote(stealing * 5, stealing * 40, 180, 0.05);
     }
 }
 
