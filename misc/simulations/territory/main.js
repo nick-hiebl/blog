@@ -280,7 +280,7 @@ const mainFunction = () => {
         for (const agent of agents) {
             ctx.fillStyle = agent.color;
             ctx.fillRect(agent.pos.x * GRID_SCALE, agent.pos.y * GRID_SCALE, GRID_SCALE, GRID_SCALE);
-            ctx.fillStyle = 'red';
+            ctx.fillStyle = 'white';
             ctx.fillRect(agent.pos.x * GRID_SCALE + 2, agent.pos.y * GRID_SCALE + 2, GRID_SCALE - 4, GRID_SCALE - 4);
 
             // ctx.strokeStyle = agent.color;
@@ -338,17 +338,14 @@ const mainFunction = () => {
 
             // Draw leader crown
             const leader = agent;
-            const midpoint = {
-                x: Math.floor((leader.overallBound.minX + leader.overallBound.maxX) / 2) + 0.5,
-                y: Math.floor((leader.overallBound.minY + leader.overallBound.maxY) / 2) + 0.5,
-            };
 
             ctx.save();
-            ctx.translate(midpoint.x * GRID_SCALE, midpoint.y * GRID_SCALE);
+            ctx.translate((leader.pos.x + 0.5) * GRID_SCALE, leader.pos.y * GRID_SCALE);
 
-            ctx.fillStyle = crownColor;
             ctx.strokeStyle = 'black';
             ctx.lineWidth = 2;
+
+            ctx.fillStyle = crownColor;
             ctx.beginPath();
 
             const crownBottom = GRID_SCALE / 4;
