@@ -84,7 +84,13 @@ class Agent {
                 const claim = fillClaiming(this.grid, this.pos, this.id, this.agents);
 
                 if (claim > 4) {
-                    claimChannel.playNote(200 + claim * 5 + this.owned / 4, 80, 0.15);
+                    const gridSize = this.grid.length * this.grid[0].length;
+                    const claimScore = Math.sqrt(claim / gridSize);
+                    const sizeScore = this.owned / gridSize;
+
+                    const pitch = (claimScore + sizeScore) / 2;
+
+                    claimChannel.playNote(pitch, 80, 0.15);
                 }
 
                 this.claimPathLength = 0;

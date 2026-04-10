@@ -155,14 +155,12 @@ const mainFunction = () => {
             }
         }
 
-        let anyMoved = false;
         for (const agent of agents) {
-            const moved = agent.update();
-            anyMoved = moved || anyMoved;
-        }
+            if (agent.dead) {
+                continue;
+            }
 
-        if (anyMoved) {
-            // walkChannel.playNote(100, 20, 0.05);
+            agent.update();
         }
 
         let anyDead = false;

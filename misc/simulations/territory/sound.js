@@ -17,7 +17,10 @@ class Channel {
     playNote(frequency, duration, gain) {
         this.volume.gain.cancelScheduledValues(audioContext.currentTime);
         this.volume.gain.setTargetAtTime(gain, audioContext.currentTime, 0.02);
-        this.oscillator.frequency.value = frequency;
+
+        const computedFrequency = 200 * Math.pow(2, frequency * 5);
+
+        this.oscillator.frequency.setTargetAtTime(computedFrequency, audioContext.currentTime, 0.03);
 
         this.volume.gain.setTargetAtTime(0, audioContext.currentTime + 0.02 + duration / 1000, 0.03);
 
