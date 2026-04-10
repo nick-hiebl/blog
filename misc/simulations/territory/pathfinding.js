@@ -314,7 +314,7 @@ const stealAndRemoveNonContiguous = (grid, id, agents, impacted) => {
                 for (const spot of coords) {
                     const cell = grid[spot.y][spot.x];
 
-                    if (euclideanDistance(spot, thiefAgent.pos) < 11) {
+                    if (euclideanDistance(spot, thiefAgent.pos) < 13) {
                         cell.deathAnim = 0;
                         cell.claimAnim = 1;
                         cell.claimed = id;

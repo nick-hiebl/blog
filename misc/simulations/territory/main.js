@@ -390,11 +390,33 @@ const mainFunction = () => {
             }
         }
 
+        const now = performance.now();
+
+        const getXY = (agent) => {
+            if (agent.lastPos && agent.recentMoveTime) {
+                if (agent.lastMovedTime + agent.recentMoveTime < now) {
+                    return agent.pos;
+                } else {
+                    const lerpFactor = (now - agent.lastMovedTime) / agent.recentMoveTime;
+
+                    return {
+                        x: lerpFactor * agent.pos.x + (1 - lerpFactor) * agent.lastPos.x,
+                        y: lerpFactor * agent.pos.y + (1 - lerpFactor) * agent.lastPos.y,
+                    };
+                }
+            }
+
+            return agent.pos;
+        };
+
         for (const agent of agents) {
+
+            const { x, y } = getXY(agent);
+
             ctx.fillStyle = agent.color;
-            ctx.fillRect(agent.pos.x * GRID_SCALE, agent.pos.y * GRID_SCALE, GRID_SCALE, GRID_SCALE);
+            ctx.fillRect(x * GRID_SCALE, y * GRID_SCALE, GRID_SCALE, GRID_SCALE);
             ctx.fillStyle = 'white';
-            ctx.fillRect(agent.pos.x * GRID_SCALE + 2, agent.pos.y * GRID_SCALE + 2, GRID_SCALE - 4, GRID_SCALE - 4);
+            ctx.fillRect(x * GRID_SCALE + 2, y * GRID_SCALE + 2, GRID_SCALE - 4, GRID_SCALE - 4);
 
             // ctx.strokeStyle = agent.color;
             // ctx.lineWidth = 2;

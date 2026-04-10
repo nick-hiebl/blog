@@ -125,6 +125,7 @@ class Agent {
             this.claimBound.insert(nextPos);
         }
 
+        this.lastPos = this.pos;
         this.pos = nextPos;
         return true;
     }
@@ -325,6 +326,8 @@ class Agent {
         //         : this.agents.length === 1
         //             ? 0.3
         //             : 1;
+
+        this.recentMoveTime = moveTime * countMultiplier;
 
         if (timeSinceLastMove > moveTime * countMultiplier) {
             const flag = this.tryMove();
