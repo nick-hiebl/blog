@@ -131,10 +131,7 @@ const mainFunction = () => {
 
     let newGrid = floodToEmptySpaces(grid, EMPTY_RANGE);
 
-    const draw = () => {
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, width, height);
-
+    const update = () => {
         const anyChampion = agents.some(agent => agent.owned > gameHeight * gameWidth * CHAMPION_RANGE);
 
         if (agents.length < 16 && !anyChampion && !spawnedThisCycle) {
@@ -166,7 +163,75 @@ const mainFunction = () => {
             }
         }
 
+        for (const agent of agents) {
+            let seenTop = false, seenBottom = false;
+            for (let c = agent.overallBound.minX; c <= agent.overallBound.maxX; c++) {
+                if (grid[agent.overallBound.minY][c].claimed === agent.id) {
+                    seenTop = true;
+                }
+                if (grid[agent.overallBound.maxY][c].claimed === agent.id) {
+                    seenBottom = true;
+                }
+
+                if (seenTop && seenBottom) {
+                    break;
+                }
+            }
+
+            if (!seenTop) {
+                agent.overallBound.noY(agent.overallBound.minY);
+            }
+            if (!seenBottom) {
+                agent.overallBound.noY(agent.overallBound.maxY);
+            }
+
+            let seenLeft = false, seenRight = false;
+            for (let r = agent.overallBound.minY; r <= agent.overallBound.maxY; r++) {
+                if (grid[r][agent.overallBound.minX].claimed === agent.id) {
+                    seenLeft = true;
+                }
+                if (grid[r][agent.overallBound.maxX].claimed === agent.id) {
+                    seenRight = true;
+                }
+
+                if (seenLeft && seenRight) {
+                    break;
+                }
+            }
+
+            if (!seenLeft) {
+                agent.overallBound.noX(agent.overallBound.minX);
+            }
+            if (!seenRight) {
+                agent.overallBound.noX(agent.overallBound.maxX);
+            }
+        }
+
+        if (performance.now() - lastCountTime > COUNT_COOLDOWN) {
+            newGrid = floodToEmptySpaces(grid, EMPTY_RANGE);
+            spawnedThisCycle = false;
+
+            lastCountTime = performance.now();
+
+            for (const agent of agents) {
+                agent.owned = 0;
+            }
+
+            for (const row of grid) {
+                for (const cell of row) {
+                    if (cell.claimed) {
+                        agentsMap[cell.claimed].owned += 1;
+                    }
+                }
+            }
+        }
+    };
+
+    const draw = () => {
         /** DRAW Phase */
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, width, height);
+
         const rectInGrid = (x, y) => {
             ctx.rect(x * GRID_SCALE + 1, y * GRID_SCALE + 1, GRID_SCALE - 2, GRID_SCALE - 2);
         };
@@ -209,48 +274,6 @@ const mainFunction = () => {
                         }
                     }
                 }
-            }
-
-            let seenTop = false, seenBottom = false;
-            for (let c = agent.overallBound.minX; c <= agent.overallBound.maxX; c++) {
-                if (grid[agent.overallBound.minY][c].claimed === agent.id) {
-                    seenTop = true;
-                }
-                if (grid[agent.overallBound.maxY][c].claimed === agent.id) {
-                    seenBottom = true;
-                }
-
-                if (seenTop && seenBottom) {
-                    break;
-                }
-            }
-
-            if (!seenTop) {
-                agent.overallBound.noY(agent.overallBound.minY);
-            }
-            if (!seenBottom) {
-                agent.overallBound.noY(agent.overallBound.maxY);
-            }
-
-            let seenLeft = false, seenRight = false;
-            for (let r = agent.overallBound.minY; r <= agent.overallBound.maxY; r++) {
-                if (grid[r][agent.overallBound.minX].claimed === agent.id) {
-                    seenLeft = true;
-                }
-                if (grid[r][agent.overallBound.maxX].claimed === agent.id) {
-                    seenRight = true;
-                }
-
-                if (seenLeft && seenRight) {
-                    break;
-                }
-            }
-
-            if (!seenLeft) {
-                agent.overallBound.noX(agent.overallBound.minX);
-            }
-            if (!seenRight) {
-                agent.overallBound.noX(agent.overallBound.maxX);
             }
 
             ctx.fill();
@@ -301,25 +324,6 @@ const mainFunction = () => {
             //     (agent.overallBound.maxX - agent.overallBound.minX + 1) * GRID_SCALE,
             //     (agent.overallBound.maxY - agent.overallBound.minY + 1) * GRID_SCALE,
             // );
-        }
-
-        if (performance.now() - lastCountTime > COUNT_COOLDOWN) {
-            newGrid = floodToEmptySpaces(grid, EMPTY_RANGE);
-            spawnedThisCycle = false;
-
-            lastCountTime = performance.now();
-
-            for (const agent of agents) {
-                agent.owned = 0;
-            }
-
-            for (const row of grid) {
-                for (const cell of row) {
-                    if (cell.claimed) {
-                        agentsMap[cell.claimed].owned += 1;
-                    }
-                }
-            }
         }
 
         const sortedAgents = agents.slice();
@@ -398,11 +402,16 @@ const mainFunction = () => {
                 ctx.strokeRect(boxLeft, boxTop, boxWidth, boxHeight);
             }
         }
-
-        requestAnimationFrame(draw);
     };
 
-    requestAnimationFrame(draw);
+    const mainLoop = () => {
+        update();
+        draw();
+
+        requestAnimationFrame(mainLoop);
+    }
+
+    requestAnimationFrame(mainLoop);
 };
 
 document.addEventListener('DOMContentLoaded', mainFunction);

@@ -19,6 +19,7 @@ const randInt = (lo, hi) => Math.floor(Math.random() * (hi - lo) + lo);
 
 const notMyTrail = id => (_, cell) => cell.claiming !== id;
 const isMyHome = id => (_, cell) => cell.claimed === id;
+const isMyTrail = id => (_, cell) => cell.claiming === id;
 
 class Agent {
     constructor(grid, agents, pos, strategy) {
@@ -77,6 +78,18 @@ class Agent {
                 this.claimPathLength = 0;
                 this.overallBound.join(this.claimBound);
                 this.claimBound.reset();
+
+                // Check if any agents can no longer reach their home
+                for (const agent of this.agents) {
+                    if (agent.claimPathLength === 0) {
+                        continue;
+                    }
+
+                    if (!findPathWithConditions(this.grid, agent.pos, isMyTrail(agent.id), isMyHome(agent.id))) {
+                        console.log('My path home was swallowed!');
+                        agent.dead = true;
+                    }
+                }
             }
         } else {
             nextCell.claiming = this.id;
