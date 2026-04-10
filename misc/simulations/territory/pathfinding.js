@@ -133,6 +133,8 @@ const fillClaiming = (grid, fromPos, id, agents) => {
     for (const pos of trail) {
         grid[pos.y][pos.x].claiming = null;
         grid[pos.y][pos.x].claimed = id;
+        grid[pos.y][pos.x].claimAnim = 1;
+        grid[pos.y][pos.x].deathAnim = 0;
     }
 
     return trail.length + findFloodRegion(grid, id, agents);
@@ -190,6 +192,8 @@ const findFloodRegion = (grid, id, agents) => {
 
                     currentCell.claimed = id;
                     currentCell.claiming = null;
+                    currentCell.claimAnim = 1;
+                    currentCell.deathAnim = 0;
 
                     agents.forEach(agent => {
                         if (agent.id === id || agent.dead) {

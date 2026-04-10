@@ -1,5 +1,5 @@
 const FIXED_COLORS = [
-    { hue: 1, s: 100, v: 30 },
+    { hue: 1, s: 100, v: 35 },
     { hue: 231, s: 100, v: 60 },
     { hue: 271, s: 100, v: 60 },
     { hue: 285, s: 100, v: 60 },
@@ -18,7 +18,7 @@ const findHue = agents => {
         throw new Error('No colors left');
     }
 
-    const color = availableHues[Math.floor(Math.random() * availableHues.length)];
+    const color = availableHues[0]; //Math.floor(Math.random() * availableHues.length)];
 
     return color;
 };
@@ -311,7 +311,7 @@ class Agent {
             const flag = this.tryMove();
 
             if (flag) {
-                this.lastMovedTime = performance.now();
+                this.lastMovedTime += moveTime * countMultiplier;
                 return true;
             }
         }

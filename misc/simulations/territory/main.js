@@ -55,10 +55,14 @@ const clearBoardOfId = (grid, id) => {
         for (const cell of row) {
             if (cell.claimed === id) {
                 cell.claimed = null;
+                cell.deathAnim = 1;
+                cell.claimAnim = 0;
             }
 
             if (cell.claiming === id) {
                 cell.claiming = null;
+                cell.deathAnim = 1;
+                cell.claimAnim = 0;
             }
         }
     }
@@ -143,6 +147,8 @@ const mainFunction = () => {
                 const newAgent = new Agent(grid, agents, { x: randomX, y: randomY });
                 agents.push(newAgent);
                 cell.claimed = newAgent.id;
+                cell.claimAnim = 0;
+                cell.deathAnim = 0;
                 agentsMap[newAgent.id] = newAgent;
 
                 spawnedThisCycle = true;
@@ -285,6 +291,36 @@ const mainFunction = () => {
             }
 
             ctx.fill();
+        }
+
+        const FADE_RATE = 0.02;
+        const DEATH_FADE_RATE = 0.01;
+
+        // Claim and death animation draw
+        for (let r = 0; r < grid.length; r++) {
+            const row = grid[r];
+
+            for (let c = 0; c < row.length; c++) {
+                const cell = row[c];
+
+                if (cell.deathAnim > 0) {
+                    if (cell.claimAnim > 0) {
+                        // Idk what happened here
+                        console.warn('Cell both claimed and deathed');
+                        cell.claimAnim = Math.max(0, cell.claimAnim - FADE_RATE);
+                    }
+
+                    cell.deathAnim = Math.max(0, cell.deathAnim - DEATH_FADE_RATE);
+
+                    ctx.fillStyle = `hsla(0, 100%, 50%, ${Math.floor(cell.deathAnim * 100)}%)`;
+                    ctx.fillRect(c * GRID_SCALE, r * GRID_SCALE, GRID_SCALE, GRID_SCALE);
+                } else if (cell.claimAnim > 0) {
+                    cell.claimAnim = Math.max(0, cell.claimAnim - FADE_RATE);
+
+                    ctx.fillStyle = `hsla(0, 100%, 100%, ${Math.floor(cell.claimAnim * 100)}%)`;
+                    ctx.fillRect(c * GRID_SCALE, r * GRID_SCALE, GRID_SCALE, GRID_SCALE);
+                }
+            }
         }
 
         for (const agent of agents) {
