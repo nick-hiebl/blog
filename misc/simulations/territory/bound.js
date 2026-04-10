@@ -49,4 +49,13 @@ class Bound {
     contains(pos) {
         return this.minX <= pos.x && pos.x <= this.maxX && this.minY <= pos.y && pos.y <= this.maxY;
     }
+
+    distance(pos) {
+        const closestPointInBound = {
+            x: Math.min(Math.max(this.minX, pos.x), this.maxX),
+            y: Math.min(Math.max(this.minY, pos.y), this.maxY),
+        };
+
+        return manhattanDist(pos, closestPointInBound);
+    }
 }

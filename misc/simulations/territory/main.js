@@ -1,4 +1,4 @@
-const TIME_TO_MOVE = 10;
+const TIME_TO_MOVE = 100;
 
 const keyboardMap = {};
 const mouse = { x: 0, y: 0 };
@@ -280,6 +280,8 @@ const mainFunction = () => {
         for (const agent of agents) {
             ctx.fillStyle = agent.color;
             ctx.fillRect(agent.pos.x * GRID_SCALE, agent.pos.y * GRID_SCALE, GRID_SCALE, GRID_SCALE);
+            ctx.fillStyle = 'red';
+            ctx.fillRect(agent.pos.x * GRID_SCALE + 2, agent.pos.y * GRID_SCALE + 2, GRID_SCALE - 4, GRID_SCALE - 4);
 
             // ctx.strokeStyle = agent.color;
             // ctx.lineWidth = 2;
@@ -393,7 +395,7 @@ const mainFunction = () => {
 
             ctx.fillText(`${owned}%`, boxLeft + boxHeight + padding, boxTop + boxHeight - 2 * padding);
 
-            if (grid[Math.floor(mouse.y / GRID_SCALE)][Math.floor(mouse.x / GRID_SCALE)].claimed === agent.id) {
+            if (grid[Math.floor(mouse.y / GRID_SCALE)]?.[Math.floor(mouse.x / GRID_SCALE)]?.claimed === agent.id) {
                 ctx.strokeStyle = 'white';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(boxLeft, boxTop, boxWidth, boxHeight);

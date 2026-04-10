@@ -31,7 +31,7 @@ class Agent {
         
         const hue = findHue(agents);
         const saturation = randInt(50, 90);
-        const lightness = randInt(40, 80);
+        const lightness = randInt(25, 60);
         this.color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
         this.claimingColor = `hsla(${hue}, ${saturation}%, ${lightness}%, 50%)`;
 
@@ -145,7 +145,22 @@ class Agent {
             this.pathDescription = null;
         }
 
-        if (this.claimPathLength > 10) {
+        let closestDist = Infinity;
+
+        if (this.claimPathLength > 0) {
+            for (const agent of this.agents) {
+                if (agent.id === this.id) {
+                    continue;
+                }
+
+                const distance = this.claimBound.distance(agent.pos);
+                if (distance < closestDist) {
+                    closestDist = distance;
+                }
+            }
+        }
+
+        if (this.claimPathLength > 10 || (this.claimPathLength > 0 && this.claimPathLength >= closestDist)) {
             const pathHome = findPathWithConditions(this.grid, this.pos, notMyTrail(this.id), isMyHome(this.id));
 
             if (!pathHome) {

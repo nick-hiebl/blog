@@ -183,10 +183,16 @@ const findFloodRegion = (grid, id, agents) => {
             } else {
                 total += connected.length;
                 connected.forEach(pos => {
-                    grid[pos.y][pos.x] = { claimed: id, claiming: null };
+                    const currentCell = grid[pos.y][pos.x];
+                    if (currentCell.claiming) {
+                        agents.find(a => a.id === currentCell.claiming).dead = true;
+                    }
+
+                    currentCell.claimed = id;
+                    currentCell.claiming = null;
 
                     agents.forEach(agent => {
-                        if (agent.id === id) {
+                        if (agent.id === id || agent.dead) {
                             return;
                         }
 
