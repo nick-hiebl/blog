@@ -157,19 +157,19 @@ const mainFunction = () => {
     const grid = createGrid(gameWidth, gameHeight);
 
     const agents = [];
+    const agentsMap = {};
 
-    agents.push(new Agent(grid, agents, { x: Math.floor(gameWidth / 2), y: Math.floor(gameHeight) / 2 }));
-    // agents.push(new Agent(grid, agents, { x: 5, y: 5 }, 'player'));
+    const spawnAgent = (pos) => {
+        const newAgent = new Agent(grid, agents, pos);
+        agents.push(newAgent);
+        agentsMap[newAgent.id] = newAgent;
+        grid[pos.y][pos.x].claimed = newAgent.id;
+        grid[pos.y][pos.x].claiming = null;
+        grid[pos.y][pos.x].claimAnim = 0;
+        grid[pos.y][pos.x].deathAnim = 0;
+    };
 
-    window.agents = agents;
-
-    const agentsMap = agents.reduce((map, agent) => {
-        map[agent.id] = agent;
-        grid[agent.pos.y][agent.pos.x] = { claimed: agent.id, claiming: null };
-        return map;
-    }, {});
-
-    window.agentsMap = agentsMap;
+    spawnAgent({ x: Math.floor(gameWidth / 2), y: Math.floor(gameHeight / 2) });
 
     const COUNT_COOLDOWN = 500;
     const EMPTY_RANGE = 12;
@@ -178,23 +178,20 @@ const mainFunction = () => {
     let lastCountTime = performance.now();
     let spawnedThisCycle = false;
 
+    const allowSpawns = true;
+
     let newGrid = floodToEmptySpaces(grid, EMPTY_RANGE);
 
     const update = () => {
         const anyChampion = agents.some(agent => agent.owned > gameHeight * gameWidth * CHAMPION_RANGE);
 
-        if (agents.length < 16 && !anyChampion && !spawnedThisCycle) {
+        if (allowSpawns && agents.length < 8 && !anyChampion && !spawnedThisCycle) {
             const randomX = Math.floor(Math.random() * gameWidth);
             const randomY = Math.floor(Math.random() * gameHeight);
 
             const cell = grid[randomY][randomX];
             if (cell && !cell.claimed && !cell.claiming && !newGrid[randomY][randomX]) {
-                const newAgent = new Agent(grid, agents, { x: randomX, y: randomY });
-                agents.push(newAgent);
-                cell.claimed = newAgent.id;
-                cell.claimAnim = 0;
-                cell.deathAnim = 0;
-                agentsMap[newAgent.id] = newAgent;
+                spawnAgent({ x: randomX, y: randomY });
 
                 spawnedThisCycle = true;
             }
