@@ -53,6 +53,8 @@ function shuffle(array) {
 const clearBoardOfId = (grid, id) => {
     for (const row of grid) {
         for (const cell of row) {
+            if (!cell) continue;
+
             if (cell.claimed === id) {
                 cell.claimed = null;
                 cell.deathAnim = 1;
@@ -103,17 +105,26 @@ const manhattanDist = (pos1, pos2) => {
 const createGrid = (width, height) => {
     const grid = [];
 
+    let cells = 0;
+
     for (let r = 0; r < height; r++) {
         const row = [];
         for (let c = 0; c < width; c++) {
-            row.push({
-                claimed: null,
-                claiming: null,
-            });
+            if (r > height * 0.8 && c > width * 0.8) {
+                row.push(null);
+            } else {
+                row.push({
+                    claimed: null,
+                    claiming: null,
+                });
+                cells += 1;
+            }
         }
 
         grid.push(row);
     }
+
+    grid.fullSize = cells;
 
     return grid;
 };
@@ -171,7 +182,7 @@ const mainFunction = () => {
             const randomY = Math.floor(Math.random() * gameHeight);
 
             const cell = grid[randomY][randomX];
-            if (!cell.claimed && !cell.claiming && !newGrid[randomY][randomX]) {
+            if (cell && !cell.claimed && !cell.claiming && !newGrid[randomY][randomX]) {
                 const newAgent = new Agent(grid, agents, { x: randomX, y: randomY });
                 agents.push(newAgent);
                 cell.claimed = newAgent.id;
@@ -230,10 +241,10 @@ const mainFunction = () => {
         for (const agent of agents) {
             let seenTop = false, seenBottom = false;
             for (let c = agent.overallBound.minX; c <= agent.overallBound.maxX; c++) {
-                if (grid[agent.overallBound.minY][c].claimed === agent.id) {
+                if (grid[agent.overallBound.minY][c]?.claimed === agent.id) {
                     seenTop = true;
                 }
-                if (grid[agent.overallBound.maxY][c].claimed === agent.id) {
+                if (grid[agent.overallBound.maxY][c]?.claimed === agent.id) {
                     seenBottom = true;
                 }
 
@@ -251,10 +262,10 @@ const mainFunction = () => {
 
             let seenLeft = false, seenRight = false;
             for (let r = agent.overallBound.minY; r <= agent.overallBound.maxY; r++) {
-                if (grid[r][agent.overallBound.minX].claimed === agent.id) {
+                if (grid[r][agent.overallBound.minX]?.claimed === agent.id) {
                     seenLeft = true;
                 }
-                if (grid[r][agent.overallBound.maxX].claimed === agent.id) {
+                if (grid[r][agent.overallBound.maxX]?.claimed === agent.id) {
                     seenRight = true;
                 }
 
@@ -283,6 +294,8 @@ const mainFunction = () => {
 
             for (const row of grid) {
                 for (const cell of row) {
+                    if (!cell) continue;
+
                     if (cell.claimed) {
                         agentsMap[cell.claimed].owned += 1;
                     }
@@ -305,7 +318,7 @@ const mainFunction = () => {
             for (let c = 0; c < row.length; c++) {
                 const cell = row[c];
 
-                if (!cell.claimed) {
+                if (cell && !cell.claimed) {
                     rectInGrid(c, r);
                 }
             }
@@ -323,13 +336,17 @@ const mainFunction = () => {
                 for (let c = agent.overallBound.minX; c <= agent.overallBound.maxX; c++) {
                     const cell = row[c];
 
+                    if (!cell) {
+                        continue;
+                    }
+
                     if (cell.claimed === agent.id) {
                         rectInGrid(c, r);
 
-                        if (c + 1 < row.length && row[c + 1].claimed === agent.id) {
+                        if (c + 1 < row.length && row[c + 1] && row[c + 1].claimed === agent.id) {
                             ctx.rect((c + 1) * GRID_SCALE - 1, r * GRID_SCALE + 1, 2, GRID_SCALE - 2);
                         }
-                        if (r + 1 < grid.length && grid[r + 1][c].claimed === agent.id) {
+                        if (r + 1 < grid.length && grid[r + 1][c] && grid[r + 1][c].claimed === agent.id) {
                             ctx.rect(c * GRID_SCALE + 1, (r + 1) * GRID_SCALE - 1, GRID_SCALE - 2, 2);
                         }
                     }
@@ -348,6 +365,8 @@ const mainFunction = () => {
 
             for (let c = 0; c < row.length; c++) {
                 const cell = row[c];
+
+                if (!cell) continue;
 
                 if (cell.deathAnim > 0) {
                     if (cell.claimAnim > 0) {
@@ -375,6 +394,8 @@ const mainFunction = () => {
 
             for (let r = 0; r < grid.length; r++) {
                 for (let c = 0; c < grid[r].length; c++) {
+                    if (!grid[r][c]) continue;
+
                     const pos = { x: c, y: r };
 
                     const distance = euclideanDistance(agents[0].pos, pos);
@@ -401,6 +422,8 @@ const mainFunction = () => {
 
                     for (let c = agent.claimBound.minX; c <= agent.claimBound.maxX; c++) {
                         const cell = row[c];
+
+                        if (!cell) continue;
 
                         if (cell.claiming === agent.id) {
                             rectInGrid(c, r);

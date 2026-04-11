@@ -3,16 +3,24 @@ const getNeighbours = (grid, cell, doShuffle = false) => {
     const neighbours = [];
 
     if (cell.x > 0) {
-        neighbours.push({ x: cell.x - 1, y: cell.y });
+        if (grid[cell.y][cell.x - 1]) {
+            neighbours.push({ x: cell.x - 1, y: cell.y });
+        }
     }
     if (cell.y > 0) {
-        neighbours.push({ x: cell.x, y: cell.y - 1 });
+        if (grid[cell.y - 1][cell.x]) {
+            neighbours.push({ x: cell.x, y: cell.y - 1 });
+        }
     }
     if (cell.x < grid[0].length - 1) {
-        neighbours.push({ x: cell.x + 1, y: cell.y });
+        if (grid[cell.y][cell.x + 1]) {
+            neighbours.push({ x: cell.x + 1, y: cell.y });
+        }
     }
     if (cell.y < grid.length - 1) {
-        neighbours.push({ x: cell.x, y: cell.y + 1 });
+        if (grid[cell.y + 1][cell.x]) {
+            neighbours.push({ x: cell.x, y: cell.y + 1 });
+        }
     }
 
     if (doShuffle) {
@@ -201,7 +209,7 @@ const findFloodRegion = (grid, id, agents) => {
 
     for (let r = loY; r <= hiY; r++) {
         for (let c = loX; c <= hiX; c++) {
-            if (grid[r][c].claimed === id) {
+            if (!grid[r][c] || grid[r][c].claimed === id) {
                 continue;
             }
 
@@ -281,14 +289,15 @@ const stealAndRemoveNonContiguous = (grid, id, agents, impacted) => {
     //     for (let c = loX; c <= hiX; c++) {
     for (let r = 0; r < grid.length; r++) {
         for (let c = 0; c < grid[r].length; c++) {
+            const cell = grid[r][c];
+            if (!cell) continue;
+
             const pos = { x: c, y: r };
             const int = coordToInt(grid, pos);
 
             if (seen.has(int)) {
                 continue;
             }
-
-            const cell = grid[r][c];
 
             // Ignore unclaimed or own territory or unimpacted territory
             if (cell.claimed === null || cell.claimed === id) {
@@ -359,6 +368,8 @@ const floodToEmptySpaces = (grid, minRequiredDistance) => {
     for (let r = 0; r < grid.length; r++) {
         for (let c = 0; c < grid[r].length; c++) {
             const cell = grid[r][c];
+
+            if (!cell) continue;
 
             if (cell.claimed || cell.claiming) {
                 queue.push({ pos: { x: c, y: r }, steps: 0 });

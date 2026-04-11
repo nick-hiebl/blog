@@ -89,7 +89,7 @@ class Agent {
                 stealAndRemoveNonContiguous(this.grid, this.id, this.agents, impactedAgents);
 
                 if (claimSize > 4) {
-                    const gridSize = this.grid.length * this.grid[0].length;
+                    const gridSize = this.grid.fullSize;
                     const claimScore = Math.sqrt(claimSize / gridSize);
                     const sizeScore = this.owned / gridSize;
 
@@ -220,7 +220,7 @@ class Agent {
         const currentCell = this.grid[this.pos.y][this.pos.x];
 
         if (isMyHome(this.id)(this.pos, currentCell)) {
-            if (this.owned === this.grid[0].length * this.grid.length) {
+            if (this.owned === this.grid.fullSize) {
                 this.winner = true;
                 if (!this.winnerTime) {
                     this.winnerTime = performance.now();
