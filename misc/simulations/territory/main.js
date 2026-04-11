@@ -107,10 +107,16 @@ const createGrid = (width, height) => {
 
     let cells = 0;
 
+    const center = {
+        x: width / 2,
+        y: height / 2,
+    };
+
     for (let r = 0; r < height; r++) {
         const row = [];
         for (let c = 0; c < width; c++) {
-            if (r > height * 0.8 && c > width * 0.8) {
+            const d = euclideanDistance({ x: c + 0.5, y: r + 0.5 }, center);
+            if (d > width * 0.5) {
                 row.push(null);
             } else {
                 row.push({
@@ -146,7 +152,7 @@ const mainFunction = () => {
     const height = canvas.clientHeight;
 
     const gameWidth = 32; // Math.floor(width / GRID_SCALE);
-    const gameHeight = 40; // Math.floor(height / GRID_SCALE);
+    const gameHeight = 32; // Math.floor(height / GRID_SCALE);
 
     const grid = createGrid(gameWidth, gameHeight);
 
@@ -572,7 +578,7 @@ const mainFunction = () => {
             // ctx.fillStyle = agent.color;
             ctx.fillStyle = 'black';
 
-            const owned = Math.round(agent.owned / (gameWidth * gameHeight) * 100);
+            const owned = Math.round(agent.owned / (grid.fullSize) * 100);
 
             // ctx.fillText(`${owned}%`, boxLeft + boxHeight + padding, boxTop + boxHeight - 1.5 * padding);
             ctx.fillText(`${owned}%`, -boxWidth / 2 + boxHeight + padding, -boxHeight / 2 + boxHeight - 1.5 * padding);
