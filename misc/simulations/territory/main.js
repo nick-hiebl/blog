@@ -369,6 +369,28 @@ const mainFunction = () => {
             }
         }
 
+        if (agents.length === 1 && agents[0].champion) {
+            const now = performance.now();
+            const elapsed = now - agents[0].championTime;
+
+            for (let r = 0; r < grid.length; r++) {
+                for (let c = 0; c < grid[r].length; c++) {
+                    const pos = { x: c, y: r };
+
+                    const distance = euclideanDistance(agents[0].pos, pos);
+
+                    const radVariation = Math.abs(distance - elapsed / 30);
+
+                    if (radVariation < 2) {
+                        let a = 58;
+
+                        ctx.fillStyle = `hsla(0, 100%, 100%, ${a}%)`;
+                        ctx.fillRect(c * GRID_SCALE, r * GRID_SCALE, GRID_SCALE, GRID_SCALE);
+                    }
+                }
+            }
+        }
+
         for (const agent of agents) {
             if (agent.claimPathLength > 0) {
                 ctx.beginPath();

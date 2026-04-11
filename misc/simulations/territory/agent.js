@@ -221,6 +221,11 @@ class Agent {
 
         if (isMyHome(this.id)(this.pos, currentCell)) {
             if (this.owned === this.grid[0].length * this.grid.length) {
+                this.winner = true;
+                if (!this.winnerTime) {
+                    this.winnerTime = performance.now();
+                }
+
                 // Agent owns the whole board, so skip this step
                 const center = {
                     x: this.grid[0].length / 2,
@@ -239,6 +244,11 @@ class Agent {
                 } else {
                     if (distToCenter.y === 0) {
                         this.champion = true;
+
+                        if (!this.championTime) {
+                            this.championTime = performance.now();
+                        }
+
                         if (!successChannel.started) {
                             successChannel.playFallingNote(440, 440 * 4, 640, 0.1);
                         }
