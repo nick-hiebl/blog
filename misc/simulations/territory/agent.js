@@ -1,9 +1,9 @@
 const FIXED_COLORS = [
-    { hue: 1, s: 100, v: 35 },
+    { hue: 1, s: 100, v: 45 },
     { hue: 231, s: 100, v: 60 },
     { hue: 271, s: 100, v: 60 },
     { hue: 285, s: 100, v: 60 },
-    { hue: 0, s: 100, v: 60 },
+    // { hue: 0, s: 100, v: 60 },
     { hue: 50, s: 100, v: 50 },
     { hue: 205, s: 100, v: 60 },
     { hue: 162, s: 100, v: 30 },
@@ -41,7 +41,7 @@ class Agent {
         const { hue, s: saturation, v: lightness } = findHue(agents);
         this.hue = hue;
         this.color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-        this.claimingColor = `hsla(${hue}, ${saturation}%, ${lightness}%, 50%)`;
+        this.claimingColor = `hsla(${hue}, ${saturation}%, ${lightness}%, 70%)`;
 
         this.lastMovedTime = performance.now();
         this.timeToMove = strategy === 'player' ? TIME_TO_MOVE / 3 : TIME_TO_MOVE;

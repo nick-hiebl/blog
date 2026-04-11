@@ -30,8 +30,8 @@ const intToCoord = (grid, int) => {
     };
 };
 
-const isEdge = (grid, cell) => {
-    return cell.x === 0 || cell.y === 0 || cell.x === grid[0].length - 1 || cell.y === grid.length - 1;
+const isEdge = (grid, pos) => {
+    return getNeighbours(grid, pos).length < 4;
 };
 
 function shuffle(array) {
