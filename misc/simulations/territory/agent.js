@@ -38,7 +38,7 @@ class Agent {
         this.agents = agents;
         this.pos = pos;
         this.strategy = strategy;
-        
+
         const { hue, s: saturation, v: lightness } = findHue(agents);
         this.hue = hue;
         this.color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
@@ -166,7 +166,7 @@ class Agent {
                 this.pathDescription = null;
             } else {
                 const firstMove = this.path[0];
-                
+
                 if (manhattanDist(firstMove, this.pos) !== 1) {
                     console.warn('Illegal move in path!');
                 }
@@ -227,36 +227,28 @@ class Agent {
                     this.winnerTime = performance.now();
                 }
 
-                // Agent owns the whole board, so skip this step
-                const center = {
-                    x: this.grid[0].length / 2,
-                    y: this.grid.length / 2,
-                };
+                if (manhattanDist(this.pos, this.grid.endSpot) === 0) {
+                    this.champion = true;
 
-                const distToCenter = {
-                    x: center.x - this.pos.x,
-                    y: center.y - this.pos.y,
-                };
-
-                if (Math.abs(distToCenter.x) > Math.abs(distToCenter.y)) {
-                    if (this.resolveMove({ x: this.pos.x + (distToCenter.x > 0 ? 1 : -1), y: this.pos.y })) {
-                        return true;
-                    }
-                } else {
-                    if (distToCenter.y === 0) {
-                        this.champion = true;
-
-                        if (!this.championTime) {
-                            this.championTime = performance.now();
-                        }
-
-                        if (!successChannel.started) {
-                            successChannel.playFallingNote(440, 440 * 4, 640, 0.1);
-                        }
-                        return false;
+                    if (!this.championTime) {
+                        this.championTime = performance.now();
                     }
 
-                    if (this.resolveMove({ x: this.pos.x, y: this.pos.y + (distToCenter.y > 0 ? 1 : -1) })) {
+                    if (!successChannel.started) {
+                        successChannel.playFallingNote(440, 440 * 4, 640, 0.1);
+                    }
+                    return false;
+                }
+
+                const pathToCenter = findPathWithConditions(
+                    this.grid,
+                    this.pos,
+                    () => true,
+                    (pos, _cell) => pos.x === this.grid.endSpot.x && pos.y === this.grid.endSpot.y,
+                );
+
+                if (pathToCenter) {
+                    if (this.savePath(pathToCenter, 'Going to center')) {
                         return true;
                     }
                 }
@@ -283,6 +275,19 @@ class Agent {
                 );
 
                 if (!explorePath) {
+                    const pathToCenter = findPathWithConditions(
+                        this.grid,
+                        this.pos,
+                        () => true,
+                        (pos, _cell) => pos.x === this.grid.endSpot.x && pos.y === this.grid.endSpot.y,
+                    );
+
+                    if (pathToCenter) {
+                        if (this.savePath(pathToCenter, 'Going to center')) {
+                            return true;
+                        }
+                    }
+
                     console.warn('This agent could not find a path to new territory', explorePath);
                 } else {
                     if (this.savePath(explorePath, 'Exploring')) {

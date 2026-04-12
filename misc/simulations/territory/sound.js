@@ -44,9 +44,3 @@ class Channel {
         }
     }
 }
-
-const claimChannel = new Channel('sine');
-const deadChannel = new Channel('square');
-const successChannel = new Channel('triangle');
-
-const bigUpChannel = new Channel('sine');

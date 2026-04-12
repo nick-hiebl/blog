@@ -3,6 +3,12 @@ const TIME_TO_MOVE = 40;
 const keyboardMap = {};
 const mouse = { x: 0, y: 0 };
 
+const claimChannel = new Channel('sine');
+const deadChannel = new Channel('square');
+const successChannel = new Channel('triangle');
+
+const bigUpChannel = new Channel('sine');
+
 const addCoord = (a, b) => {
     return { x: a.x + b.x, y: a.y + b.y };
 };
@@ -102,6 +108,88 @@ const manhattanDist = (pos1, pos2) => {
     return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y);
 };
 
+const SHAPE = `
+  XXXXX                           X
+  X----XXXXXX                    X-X
+  X----------XXXXXXXX            X--X
+  X------------------XXXXX     XX3-X
+ X----0-------------------X   X---X
+ X------------------------X  X-----X
+X-------------------------X X-----X
+X-------------------1------X--2--X
+X--------------------------------X
+X--------------------------------X
+X--------------------------------X
+ X----------------V--------------X
+ X-------------------------------X
+ X-4-----------------------------X
+  X-----------------------------X
+   X----------------------------X
+    XX-------------------------X
+      X-----------------------X
+       XXXX-----------------6-X
+           X----5-------------X
+            X-X----------XXXX--X
+             X X----XXXXX    X--X
+               X---X          X-X
+                X-X            XX
+                 X
+`;
+
+const NAMES = [
+    'North West',
+    'Mid-West',
+    'Mid-Atlantic',
+    'North East',
+    'West',
+    'South West',
+    'South East',
+];
+
+const createGridFromShape = () => {
+    const procShape = SHAPE.split('\n').filter(v => !!v);
+
+    const height = procShape.length;
+    const width = procShape.reduce((widest, row) => {
+        if (row.length > widest) {
+            return row.length;
+        }
+        return widest;
+    }, 0);
+
+    const grid = [];
+    let cells = 0;
+    const spawnSpots = [];
+
+    for (let r = 0; r < height; r++) {
+        const row = [];
+        grid.push(row);
+
+        for (let c = 0; c < width; c++) {
+            const letter = procShape[r][c];
+            if (letter in NAMES) {
+                spawnSpots.push({ x: c, y: r, name: NAMES[letter] });
+            } else if (letter === 'V') {
+                grid.endSpot = { x: c, y: r };
+            }
+
+            if (letter && letter !== ' ') {
+                row.push({
+                    claimed: null,
+                    claiming: null,
+                });
+                cells++;
+            } else {
+                row.push(null);
+            }
+        }
+    }
+
+    grid.fullSize = cells;
+
+    return { grid, spawnSpots };
+};
+
 const createGrid = (width, height) => {
     const grid = [];
 
@@ -112,8 +200,12 @@ const createGrid = (width, height) => {
         y: height / 2,
     };
 
+    grid.endSpot = { x: Math.floor(width / 2), y: Math.floor(height / 2) };
+
     for (let r = 0; r < height; r++) {
         const row = [];
+        grid.push(row);
+
         for (let c = 0; c < width; c++) {
             const d = euclideanDistance({ x: c + 0.5, y: r + 0.5 }, center);
             if (d > width * 0.5) {
@@ -126,13 +218,11 @@ const createGrid = (width, height) => {
                 cells += 1;
             }
         }
-
-        grid.push(row);
     }
 
     grid.fullSize = cells;
 
-    return grid;
+    return { grid, spawnSpots: [] };
 };
 
 const GRID_SCALE = 10;
@@ -151,16 +241,18 @@ const mainFunction = () => {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
 
-    const gameWidth = 32; // Math.floor(width / GRID_SCALE);
-    const gameHeight = 32; // Math.floor(height / GRID_SCALE);
+    // const { grid, spawnSpots } = createGrid(31, 31);
+    const { grid, spawnSpots } = createGridFromShape();
 
-    const grid = createGrid(gameWidth, gameHeight);
+    const gameWidth = grid[0].length;
+    const gameHeight = grid.length;
 
     const agents = [];
     const agentsMap = {};
 
-    const spawnAgent = (pos) => {
+    const spawnAgent = (pos, name) => {
         const newAgent = new Agent(grid, agents, pos);
+        newAgent.name = name;
         agents.push(newAgent);
         agentsMap[newAgent.id] = newAgent;
         grid[pos.y][pos.x].claimed = newAgent.id;
@@ -169,7 +261,11 @@ const mainFunction = () => {
         grid[pos.y][pos.x].deathAnim = 0;
     };
 
-    spawnAgent({ x: Math.floor(gameWidth / 2), y: Math.floor(gameHeight / 2) });
+    if (spawnSpots.length > 0) {
+        spawnSpots.forEach(pos => spawnAgent(pos, pos.name));
+    } else {
+        spawnAgent({ x: Math.floor(gameWidth / 2), y: Math.floor(gameHeight / 2) });
+    }
 
     const COUNT_COOLDOWN = 500;
     const EMPTY_RANGE = 12;
@@ -178,7 +274,7 @@ const mainFunction = () => {
     let lastCountTime = performance.now();
     let spawnedThisCycle = false;
 
-    const allowSpawns = true;
+    const allowSpawns = spawnSpots.length === 0;
 
     let newGrid = floodToEmptySpaces(grid, EMPTY_RANGE);
 
@@ -518,7 +614,7 @@ const mainFunction = () => {
         }
     };
 
-    const textBoxWidth = 400;
+    const textBoxWidth = 600;
     const textBoxHeight = 300;
     const maxItems = 8;
 
@@ -571,6 +667,18 @@ const mainFunction = () => {
             // ctx.fillStyle = '#ffffff88';
             // ctx.fillRect(boxLeft + boxHeight, boxTop + padding, boxWidth - padding - boxHeight, boxHeight - 2 * padding);
 
+            if (agent.name) {
+                ctx.font = 'italic 24px Segoe UI';
+                ctx.fillStyle = '#444';
+
+                ctx.fillText(
+                    agent.name,
+                    -boxWidth / 2 + boxHeight,
+                    -boxHeight / 2 + boxHeight - 1.75 * padding,
+                );
+            }
+
+
             ctx.font = 'bold 32px Segoe UI';
             // ctx.fillStyle = agent.color;
             ctx.fillStyle = 'black';
@@ -578,13 +686,20 @@ const mainFunction = () => {
             const owned = Math.round(agent.owned / (grid.fullSize) * 100);
 
             // ctx.fillText(`${owned}%`, boxLeft + boxHeight + padding, boxTop + boxHeight - 1.5 * padding);
-            ctx.fillText(`${owned}%`, -boxWidth / 2 + boxHeight + padding, -boxHeight / 2 + boxHeight - 1.5 * padding);
+            const pText = `${owned}%`;
+            const w = ctx.measureText(pText).width;
+            ctx.fillText(
+                pText,
+                boxWidth / 2 - w - padding,
+                // -boxWidth / 2 + boxHeight,
+                -boxHeight / 2 + boxHeight - 1.5 * padding,
+            );
 
             ctx.restore();
         }
     };
 
-    const innerScale = 3;
+    const innerScale = 2.5;
 
     const innerScreenWidth = gameWidth * GRID_SCALE * innerScale;
     const innerScreenHeight = gameHeight * GRID_SCALE * innerScale;
@@ -619,25 +734,41 @@ const mainFunction = () => {
 
     let lastTime = null;
 
+    let firstLoop = true;
+
     const mainLoop = () => {
         const now = performance.now();
 
         const elapsed = now - lastTime;
 
-        update(elapsed);
+        if (!firstLoop) {
+            update(elapsed);
+        }
         mainDraw(elapsed);
-
-        requestAnimationFrame(mainLoop);
 
         eventQueue.update(elapsed);
 
         lastTime = now;
-    }
+
+        if (firstLoop) {
+            setTimeout(() => {
+                firstLoop = false;
+                lastTime = performance.now();
+
+                requestAnimationFrame(mainLoop);
+                agents.forEach(agent => {
+                    agent.lastMovedTime = performance.now();
+                })
+            }, 200);
+        } else {
+            requestAnimationFrame(mainLoop);
+        }
+    };
 
     setTimeout(() => {
         lastTime = performance.now();
         requestAnimationFrame(mainLoop);
-    }, 500);
+    }, 800);
 };
 
 document.addEventListener('DOMContentLoaded', mainFunction);
