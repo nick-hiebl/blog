@@ -8,6 +8,14 @@ const myInterp = (target, current) => {
 
 const lerp = (current, target, factor) => {
     return current * (1 - factor) + target * factor;
+};
+
+const easeInOut = (factor) => {
+    return factor * factor * (3 - 2 * factor);
+};
+
+const easeOut = (factor) => {
+    return 1 - (1 - factor) * (1 - factor);
 }
 
 const expInterp = (current, target, factor) => {
@@ -20,7 +28,7 @@ const expInterp = (current, target, factor) => {
     const t = (Math.exp(factor * factor) - 1) / (Math.E - 1);
 
     return lerp(current, target, t);
-}
+};
 
 const mainFunction = (words) => {
     const button = document.getElementById('click-me');
@@ -38,7 +46,7 @@ const mainFunction = (words) => {
 
     let currentLow = 0;
 
-    const ZOOM_DURATION = 1000;
+    const ZOOM_DURATION = 400;
 
     let timeLeft = 0;
     let myLow = 0;
@@ -63,8 +71,10 @@ const mainFunction = (words) => {
         ctx.save();
         ctx.translate(edgePadding, edgePadding);
 
-        const thisLow = expInterp(myLow, myLowTarget, (ZOOM_DURATION - timeLeft) / ZOOM_DURATION);
-        const thisHigh = expInterp(myHigh, myHighTarget, (ZOOM_DURATION - timeLeft) / ZOOM_DURATION);
+        const timeFactor = easeOut((ZOOM_DURATION - timeLeft) / ZOOM_DURATION);
+
+        const thisLow = expInterp(myLow, myLowTarget, timeFactor);
+        const thisHigh = expInterp(myHigh, myHighTarget, timeFactor);
 
         const targetBarLength = dict.words.length / (thisHigh - thisLow) * idealBarLength;
 
@@ -72,12 +82,13 @@ const mainFunction = (words) => {
 
         const idealLow = thisLow / dict.words.length * dict.barLength;
 
-        currentLow = idealLow; // myInterp(idealLow, currentLow);
+        currentLow = idealLow;
 
         ctx.translate(0, -currentLow);
 
         dict.drawBar(canvas);
-        dict.drawCursor(canvas, dict.getMidIndex());
+        const midWord = dict.words[dict.getMidIndex];
+        dict.drawCursor(canvas, dict.getMidIndex(), (midWord > myWord ? ' > ' : ' < ') + myWord);
 
         ctx.restore();
     };
@@ -115,9 +126,13 @@ const mainFunction = (words) => {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const v = await fetch('./words_dictionary.json');
+    // const v = await fetch('./words_dictionary.json');
+    // const words = Object.keys(await v.json());
+    const file = await fetch('./b.txt').then(v => v.text());
+    const words = file.split('\n');
 
-    const words = Object.keys(await v.json());
+    // const words = (await fetch('./b.txt')).then(v => v.text()).split('\n');
+
     words.sort((a, b) => a.localeCompare(b));
 
     console.log(words.length);

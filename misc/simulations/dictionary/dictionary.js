@@ -62,7 +62,7 @@ class Dictionary {
         ctx.translate(0, -y);
     }
 
-    drawCursor(canvas, index) {
+    drawCursor(canvas, index, suffix) {
         const { ctx } = canvas;
 
         ctx.fillStyle = 'white';
@@ -80,7 +80,7 @@ class Dictionary {
         ctx.fill();
 
         ctx.font = '64px Segoe UI';
-        ctx.fillText(this.words[index], TEXT_HEIGHT + 6 * PADDING + CURSOR_SIZE, 16);
+        ctx.fillText(this.words[index] + (suffix ?? ''), TEXT_HEIGHT + 6 * PADDING + CURSOR_SIZE, 16);
 
         ctx.translate(0, -y);
     }
