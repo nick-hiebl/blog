@@ -109,41 +109,49 @@ const manhattanDist = (pos1, pos2) => {
 };
 
 const SHAPE = `
-  XXXXX                           X
-  X----XXXXXX                    X-X
-  X----------XXXXXXXX            X--X
-  X------------------XXXXX     XX3-X
- X----0-------------------X   X---X
- X------------------------X  X-----X
-X-------------------------X X-----X
-X-------------------1------X--2--X
-X--------------------------------X
-X--------------------------------X
-X--------------------------------X
- X----------------V--------------X
- X-------------------------------X
- X-4-----------------------------X
-  X-----------------------------X
-   X----------------------------X
-    XX-------------------------X
-      X-----------------------X
-       XXXX-----------------6-X
-           X----5-------------X
-            X-X----------XXXX--X
-             X X----XXXXX    X--X
-               X---X          X-X
-                X-X            XX
-                 X
+               XXX       XX
+               X-XXX     XX
+              X----X     X-X
+             X-----X     X--X
+          XXX------X     X--X
+         X----------XX   X---X
+        X-------------XXX----X
+       X---------------------X
+       X----------------------XX
+      X-------------------------X
+     X--------------------------X
+   XX----------------------------X
+  X-----------------2-------------X
+ X-------------------------------4-X
+X------------------V---------------X
+X----------------------------------X
+X-----------------------------------X
+X-----------------------------------X
+X----------------------------------X
+ X---------------------------------X
+  X------------XXX-----------------X
+  X0--------XXX   X---------------X
+   X-------X       X-X3---------1X
+   X----XXX         XXX----------X
+    X--X              XX------7--X
+    XXX                 X-------X
+                        XX--5--XX
+                          XXXXX
+                            XXX
+                            X6XX
+                             XXX
+                             XX
 `;
 
 const NAMES = [
-    'North West',
-    'Mid-West',
-    'Mid-Atlantic',
-    'North East',
-    'West',
-    'South West',
-    'South East',
+    'WA',
+    'NSW',
+    'NT',
+    'SA',
+    'QLD',
+    'VIC',
+    'TAS',
+    'ACT',
 ];
 
 const createGridFromShape = () => {
@@ -410,7 +418,7 @@ const mainFunction = () => {
 
         // Empty square pass
         ctx.beginPath();
-        ctx.fillStyle = '#181818';
+        ctx.fillStyle = '#242424';
         for (let r = 0; r < grid.length; r++) {
             const row = grid[r];
 
@@ -483,6 +491,28 @@ const mainFunction = () => {
 
                     ctx.fillStyle = `hsla(0, 100%, 100%, ${Math.floor(cell.claimAnim * 100)}%)`;
                     ctx.fillRect(c * GRID_SCALE, r * GRID_SCALE, GRID_SCALE, GRID_SCALE);
+                }
+            }
+        }
+
+        if (agents.length === 1 && !allowSpawns) {
+            if (!agents[0].soloTime) {
+                agents[0].soloTime = performance.now();
+            }
+
+            const elapsed = performance.now() - agents[0].soloTime;
+
+            for (let r = 0; r < grid.length; r++) {
+                for (let c = 0; c < grid[r].length; c++) {
+                    if (!grid[r][c]) continue;
+
+                    const pos = { x: c, y: r };
+                    const distance = euclideanDistance(agents[0].pos, pos);
+
+                    if (distance < elapsed / 30) {
+                        grid[r][c].claimed = agents[0].id;
+                        agents[0].overallBound.insert(pos);
+                    }
                 }
             }
         }
@@ -759,7 +789,7 @@ const mainFunction = () => {
                 agents.forEach(agent => {
                     agent.lastMovedTime = performance.now();
                 })
-            }, 200);
+            }, 2000);
         } else {
             requestAnimationFrame(mainLoop);
         }
@@ -768,7 +798,7 @@ const mainFunction = () => {
     setTimeout(() => {
         lastTime = performance.now();
         requestAnimationFrame(mainLoop);
-    }, 800);
+    }, 4000);
 };
 
 document.addEventListener('DOMContentLoaded', mainFunction);

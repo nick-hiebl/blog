@@ -220,6 +220,21 @@ class Agent {
 
         const currentCell = this.grid[this.pos.y][this.pos.x];
 
+        if (this.soloTime) {
+            const pathToCenter = findPathWithConditions(
+                this.grid,
+                this.pos,
+                () => true,
+                (pos, _cell) => pos.x === this.grid.endSpot.x && pos.y === this.grid.endSpot.y,
+            );
+
+            if (pathToCenter) {
+                if (this.savePath(pathToCenter, 'Going to center')) {
+                    return true;
+                }
+            }
+        }
+
         if (isMyHome(this.id)(this.pos, currentCell)) {
             if (this.owned === this.grid.fullSize) {
                 this.winner = true;
