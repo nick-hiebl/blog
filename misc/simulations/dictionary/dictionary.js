@@ -45,15 +45,21 @@ class Dictionary {
     drawPeg(canvas, rel) {
         const { ctx } = canvas;
 
+        const y = rel * this.barLength;
+
+        ctx.translate(0, y);
+
         ctx.fillStyle = '#46a';
         ctx.beginPath();
-        canvas.drawRoundedRectangle(-1.5 * PADDING, rel * this.barLength - 1.5 * PADDING, TEXT_HEIGHT + 3 * PADDING, 3 * PADDING, { all: 1.5 * PADDING });
+        canvas.drawRoundedRectangle(-1.5 * PADDING, -1.5 * PADDING, TEXT_HEIGHT + 3 * PADDING, 3 * PADDING, { all: 1.5 * PADDING });
         ctx.fill();
 
         ctx.fillStyle = '#7bf';
         ctx.beginPath();
-        canvas.drawRoundedRectangle(-PADDING, rel * this.barLength - PADDING, TEXT_HEIGHT + 2 * PADDING, 2 * PADDING, { all: PADDING });
+        canvas.drawRoundedRectangle(-PADDING, -PADDING, TEXT_HEIGHT + 2 * PADDING, 2 * PADDING, { all: PADDING });
         ctx.fill();
+
+        ctx.translate(0, -y);
     }
 
     drawCursor(canvas, index) {
@@ -63,31 +69,33 @@ class Dictionary {
 
         const y = this.barLength * index / this.words.length;
 
-        const CURSOR_SIZE = 12;
+        ctx.translate(0, y);
+
+        const CURSOR_SIZE = 24;
 
         ctx.beginPath();
-        ctx.moveTo(TEXT_HEIGHT + 2 * PADDING, y);
-        ctx.lineTo(TEXT_HEIGHT + 2 * PADDING + CURSOR_SIZE, y - CURSOR_SIZE);
-        ctx.lineTo(TEXT_HEIGHT + 2 * PADDING + CURSOR_SIZE, y + CURSOR_SIZE);
+        ctx.moveTo(TEXT_HEIGHT + 2 * PADDING, 0);
+        ctx.lineTo(TEXT_HEIGHT + 2 * PADDING + CURSOR_SIZE, -CURSOR_SIZE);
+        ctx.lineTo(TEXT_HEIGHT + 2 * PADDING + CURSOR_SIZE, CURSOR_SIZE);
         ctx.fill();
 
-        ctx.font = '20px Segoe UI';
-        ctx.fillText(this.words[index], TEXT_HEIGHT + 3.5 * PADDING + CURSOR_SIZE, y + 6);
+        ctx.font = '64px Segoe UI';
+        ctx.fillText(this.words[index], TEXT_HEIGHT + 6 * PADDING + CURSOR_SIZE, 16);
+
+        ctx.translate(0, -y);
     }
 
     drawBar(canvas) {
         const { ctx } = canvas;
 
-        if (!this.gradient) {
-            this.gradient = ctx.createLinearGradient(0, 0, TEXT_HEIGHT, this.barLength);
-            this.gradient.addColorStop(0 / 6, 'red');
-            this.gradient.addColorStop(1 / 6, 'orange');
-            this.gradient.addColorStop(2 / 6, 'yellow');
-            this.gradient.addColorStop(3 / 6, 'green');
-            this.gradient.addColorStop(4 / 6, 'skyblue');
-            this.gradient.addColorStop(5 / 6, 'blue');
-            this.gradient.addColorStop(6 / 6, 'violet');
-        }
+        const gradient = ctx.createLinearGradient(0, 0, TEXT_HEIGHT, this.barLength);
+        gradient.addColorStop(0 / 6, 'red');
+        gradient.addColorStop(1 / 6, 'orange');
+        gradient.addColorStop(2 / 6, 'yellow');
+        gradient.addColorStop(3 / 6, 'green');
+        gradient.addColorStop(4 / 6, 'skyblue');
+        gradient.addColorStop(5 / 6, 'blue');
+        gradient.addColorStop(6 / 6, 'violet');
 
         ctx.fillStyle = '#ddf';
         ctx.beginPath();
@@ -99,7 +107,7 @@ class Dictionary {
         drawRoundedRectangle(ctx, -PADDING, -PADDING, 2 * PADDING + TEXT_HEIGHT, 2 * PADDING + this.barLength, 8 + PADDING);
         ctx.fill();
 
-        ctx.fillStyle = this.gradient;
+        ctx.fillStyle = gradient;
         ctx.beginPath();
         drawRoundedRectangle(ctx, 0, 0, TEXT_HEIGHT, this.barLength, 8);
         ctx.fill();
@@ -108,7 +116,7 @@ class Dictionary {
             const lo = this.lowIndex / this.words.length;
 
             ctx.filter = 'grayscale(100%)';
-            ctx.fillStyle = this.gradient;
+            ctx.fillStyle = gradient;
             ctx.beginPath();
             canvas.drawRoundedRectangle(0, 0, TEXT_HEIGHT, this.barLength * lo, { top: 8 });
             ctx.fill();
@@ -122,7 +130,7 @@ class Dictionary {
             const hi = this.highIndex / this.words.length;
 
             ctx.filter = 'grayscale(100%)';
-            ctx.fillStyle = this.gradient;
+            ctx.fillStyle = gradient;
             ctx.beginPath();
             canvas.drawRoundedRectangle(0, this.barLength * hi, TEXT_HEIGHT, this.barLength * (1 - hi), { bottom: 8 });
             ctx.fill();
