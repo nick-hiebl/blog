@@ -226,6 +226,7 @@ const mainFunction = () => {
     const isTargetSpot = pos => pos.x === targetPos.x && pos.y === targetPos.y;
 
     const search = dfsSetup(grid, start, () => true, (pos) => isTargetSpot(pos));
+    search.paused = true;
 
     let pauseOnEvery = false;
 
@@ -298,6 +299,13 @@ const mainFunction = () => {
                 if (search.from.has(int)) {
                     const src = search.from.get(int);
 
+                    if (src === -1) {
+                        continue;
+                    }
+                    // const b = intToCoord(grid, src);
+                    // ctx.moveTo((b.x + 0.5) * GRID_SCALE, (b.y + 0.5) * GRID_SCALE);
+                    // ctx.lineTo((c + 0.5) * GRID_SCALE, (r + 0.5) * GRID_SCALE);
+
                     if (src === int - 1) {
                         ctx.moveTo((c + 0.7) * GRID_SCALE, (r + 0.25) * GRID_SCALE);
                         ctx.lineTo((c + 0.3) * GRID_SCALE, (r + 0.5) * GRID_SCALE);
@@ -367,9 +375,6 @@ const mainFunction = () => {
 
         const elapsed = now - lastTime;
 
-        if (!firstLoop) {
-            update(elapsed);
-        }
         mainDraw(elapsed);
 
         // eventQueue.update(elapsed);
@@ -394,6 +399,10 @@ const mainFunction = () => {
     setTimeout(() => {
         lastTime = performance.now();
         requestAnimationFrame(mainLoop);
+
+        setInterval(() => {
+            update();
+        }, 50);
     }, 100);
 
     const button = document.getElementById('click-me');

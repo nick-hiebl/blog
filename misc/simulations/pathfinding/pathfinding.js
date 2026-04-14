@@ -62,10 +62,11 @@ const dfs = (grid, state) => {
 
             if (state.from.has(neighbourInt)) {
                 continue;
+            } else {
+                state.from.set(neighbourInt, int);
+                someNeighbourGood = true;
             }
-            someNeighbourGood = true;
 
-            state.from.set(neighbourInt, int);
 
             const cell = grid[neighbour.y][neighbour.x];
             if (state.endCondition(neighbour, cell)) {
