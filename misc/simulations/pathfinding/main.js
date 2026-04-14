@@ -235,14 +235,14 @@ class PathfindingInstance {
             dfs(this.grid, this.search);
 
             if (this.search.done) {
-                this.channel.playFallingNote(600, 1800, 600, 0.07);
+                this.channel.playFallingNote(600, 1800, 600, 0.1);
             } else if (this.search.backtracking) {
                 const head = this.search.trail[this.search.trail.length - 1];
 
                 if (head) {
                     const distToStart = euclideanDistance(head, this.start);
                     const note = distToStart * 4 + 200;
-                    this.channel.playFallingNote(note, note, 1, 0.03);
+                    this.channel.playFallingNote(note, note, 1, 0.06);
                 }
             } else {
                 const head = this.search.queue.head();
@@ -250,7 +250,7 @@ class PathfindingInstance {
                 if (head) {
                     const distToEnd = euclideanDistance(head, this.target);
                     const note = distToEnd * 4 + 200;
-                    beepChannel.playFallingNote(note, note, 1, 0.03);
+                    beepChannel.playFallingNote(note, note, 1, 0.06);
                 }
             }
         }
@@ -381,8 +381,8 @@ class PathfindingInstance {
         ctx.fillStyle = 'white';
         const y = this.canvas.height - 40;
         ctx.fillText(text, 4, y);
-        ctx.fillText(`Trail length: ${this.search.trail.length}`, 260, y);
-        ctx.fillText(`Queue size: ${this.search.queue.length}`, 480, y);
+        ctx.fillText(`Trail length: ${this.search.trail.length}`, 290, y);
+        ctx.fillText(`Queue size: ${this.search.queue.length}`, 550, y);
     }
 }
 
@@ -435,7 +435,7 @@ const mainFunction = () => {
                     ctx.scale(1.05, 1.05);
                 } else {
                     ctx.filter = 'opacity(50%)';
-                    ctx.scale(0.9, 0.9);
+                    ctx.scale(0.93, 0.93);
                 }
                 ctx.translate(-pf.canvas.width / 2, -pf.canvas.height / 2);
             }
