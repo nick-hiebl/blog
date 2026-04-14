@@ -12,6 +12,10 @@ class DoubleEndedQueue {
         this.tail.push(item);
     }
 
+    pushFront(item) {
+        this.front.push(item);
+    }
+
     head() {
         return this.front[this.front.length - 1];
     }
