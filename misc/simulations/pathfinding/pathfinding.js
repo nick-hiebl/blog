@@ -45,10 +45,29 @@ const dfsSetup = (grid, startPos, walkable, endCondition) => {
         done: false,
         visited,
         paused: false,
+        backtracking: false,
+        trail: [],
     };
 };
 
 const dfs = (grid, state) => {
+    if (state.backtracking) {
+        const latest = state.trail[state.trail.length - 1];
+
+        const nextInt = state.from.get(coordToInt(grid, latest));
+
+        if (nextInt === -1) {
+            state.done = true;
+            return;
+        }
+
+        const next = intToCoord(grid, nextInt);
+
+        state.trail.push(next);
+
+        return;
+    }
+
     if (!state.queue.empty()) {
         const current = state.queue.pop();
 
@@ -70,7 +89,10 @@ const dfs = (grid, state) => {
             const cell = grid[neighbour.y][neighbour.x];
             if (state.endCondition(neighbour, cell)) {
                 state.visited.add(neighbourInt);
-                state.done = true;
+                state.paused = true;
+
+                state.backtracking = true;
+                state.trail.push(neighbour);
             } else if (state.walkable(neighbour, cell)) {
                 state.queue.pushFront(neighbour);
             } else {

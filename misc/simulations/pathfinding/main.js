@@ -231,19 +231,32 @@ const mainFunction = () => {
     let pauseOnEvery = false;
 
     const update = () => {
-        if (!search.done && !search.paused) {
+        if (search.paused) {
+            return;
+        }
+
+        if (!search.done) {
             dfs(grid, search);
             if (pauseOnEvery) {
                 search.paused = true;
             }
 
-            const head = search.queue.head();
+            if (search.backtracking) {
+                const head = search.trail[search.trail.length - 1];
 
-            if (head) {
-                const distToEnd = euclideanDistance(head, targetPos);
-                const note = (distToEnd * 4 + 200);
-                console.log('note', note);
-                beepChannel.playFallingNote(note, note, 0.05, 0.03);
+                if (head) {
+                    const distToStart = euclideanDistance(head, start);
+                    const note = (distToStart * 4 + 200);
+                    beepChannel.playFallingNote(note, note, 0.05, 0.03);
+                }
+            } else {
+                const head = search.queue.head();
+
+                if (head) {
+                    const distToEnd = euclideanDistance(head, targetPos);
+                    const note = (distToEnd * 4 + 200);
+                    beepChannel.playFallingNote(note, note, 0.05, 0.03);
+                }
             }
         }
     };
@@ -336,6 +349,13 @@ const mainFunction = () => {
             }
         }
         ctx.stroke();
+
+        ctx.beginPath();
+        ctx.fillStyle = 'white';
+        for (const pos of search.trail) {
+            rectInGrid(pos.x, pos.y);
+        }
+        ctx.fill();
 
         ctx.strokeStyle = 'gold';
         ctx.beginPath();
