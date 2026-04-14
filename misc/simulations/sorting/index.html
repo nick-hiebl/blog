@@ -1,0 +1,36 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="./style.css" />
+        <title>Pathfinding</title>
+    </head>
+    <body>
+        <div id="title-box">
+            <h1>Breadth-First Search</h1>
+            <!-- <div>Simulating multiple runs to highlight potential variance</div> -->
+        </div>
+        <div id="canvas-box">
+            <!-- <h3>Depth-First Search</h3>
+            <span>Continues traversing until it gets stuck, then backtracks.</span>
+            <span>Therefore it often explores fewer nodes along the way, but may find a winding path.</span>
+            <div class="canvas-grid" id="dfs">
+            </div> -->
+            <!-- <h3>Breadth-First Search</h3> -->
+            <span>BFS visits all nodes in order of closeness to the start.</span>
+            <span>This means it may get "distracted" or over-invest time in large open spaces.</span>
+            <span>See how slow BFS is when starting in an enclosed area vs. a wide open area.</span>
+            <br />
+            <div class="canvas-grid" id="bubble">
+            </div>
+        </div>
+        <canvas id="canvas" width="1080" height="1920"></canvas>
+        <div id="control-panel">
+            <button id="click-me">Click me</button>
+            <label><input type="checkbox" id="pause-on-every" />Pause on every?</label>
+        </div>
+        <script src="../canvas.js"></script>
+        <script src="../queue.js"></script>
+        <script src="../sound.js"></script>
+        <script src="./sorting.js"></script>
+        <script src="./main.js"></script>
+    </body>
+</html>

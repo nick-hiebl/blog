@@ -32,6 +32,7 @@ class Canvas {
         if (topLeftRadius === 0) {
             this.ctx.moveTo(x, y);
         } else {
+            this.ctx.moveTo(x, y + topLeftRadius);
             this.ctx.arc(x + topLeftRadius, y + topLeftRadius, topLeftRadius, Math.PI, Math.PI * 3 / 2);
         }
 
