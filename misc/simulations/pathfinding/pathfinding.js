@@ -50,7 +50,7 @@ const dfsSetup = (grid, startPos, walkable, endCondition) => {
     };
 };
 
-const dfs = (grid, state) => {
+const dfs = (grid, state, strategy) => {
     if (state.backtracking) {
         const latest = state.trail[state.trail.length - 1];
 
@@ -94,8 +94,11 @@ const dfs = (grid, state) => {
                 state.backtracking = true;
                 state.trail.push(neighbour);
             } else if (state.walkable(neighbour, cell)) {
-                state.queue.pushFront(neighbour);
-                // state.queue.push(neighbour);
+                if (strategy === 'dfs') {
+                    state.queue.pushFront(neighbour);
+                } else {
+                    state.queue.push(neighbour);
+                }
             } else {
                 continue;
             }

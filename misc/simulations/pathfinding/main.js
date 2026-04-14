@@ -77,42 +77,72 @@ const manhattanDist = (pos1, pos2) => {
 };
 
 const SHAPE = `
-  XXXXX                           X
-  X----XXXXXX                    X-X
-  X----------XXXXXXXX            X--X
-  X------------------XXXXX     XX3-X
- X----0-------------------X   X---X
- X------------------------X  X-----X
-X-------------------------X X-----X
-X-------------------1------X--2--X
-X--------------------------------X
-X--------------------------------X
-X--------------------------------X
- X----------------V--------------X
- X-------------------------------X
- X-4-----------------------------X
-  X-----------------------------X
-   X----------------------------X
-    XX-------------------------X
-      X-----------------------X
-       XXXX-----------------6-X
-           X----5-------------X
-            X-X----------XXXX--X
-             X X----XXXXX    X--X
-               X---X          X-X
-                X-X            XX
-                 X
+               XXX       XX
+               X-XXX     XX
+              X----X     X-X
+             X-----X     X--X
+          XXX-0----X     X--X
+         X----------XX   X---X
+        X-------------XXX----X
+       X---------------------X
+       X----------------------XX
+      X-------------------------X
+     X--------------------------X
+   XX----------------------------X
+  X-------------------------------X
+ X---------------------------------X
+X------------------V---------------X
+X----------------------------------X
+X-----------------------------------X
+X-----------------------------------X
+X----------------------------------X
+ X---------------------------------X
+  X------------XXX-----------------X
+  X---------XXX   X---------------X
+   X-------X       X-X-----------X
+   X----XXX         XXX----------X
+    X--X              XX---------X
+    XXX                 X-------X
+                        XX-----XX
+                          XXXXX
+                            XXX
+                            X6XX
+                             XXX
+                             XX
 `;
 
-const NAMES = [
-    'North West',
-    'Mid-West',
-    'Mid-Atlantic',
-    'North East',
-    'West',
-    'South West',
-    'South East',
-];
+const SHAPE2 = `
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+X-----------------------------------X
+X-----------------------------------X
+X-----------------------------------X
+X-----------------------------------X
+X-----------------------------------X
+X-----------------------------------X
+X-----------------------------------X
+X-----------------------------------X
+X-----------------V-----------------X
+XXXXXXXX---------------------XXXXXXXX
+       X---------------------X
+       X---------------------X
+       XXXXXXXXXXX-XXXXXXXXXXX
+                 X-X
+             XXXXX-X
+             X-----X
+             X-XXXXX
+             X-X
+             X-XXXXX
+             X-----X
+             XXXXX-X
+                 X-X
+                XX-XX
+                X---X
+                X-0-X
+                X---X
+                XXXXX
+`;
+
+const NAMES = ['aa']; // Value doesn't matter, we just need an index of 0 in this array.
 
 const createGridFromShape = (shape, names) => {
     const procShape = shape.split('\n').filter(v => !!v);
@@ -200,10 +230,11 @@ const ZOOM = 2;
 const TEXT_SPACE = 36;
 
 class PathfindingInstance {
-    constructor(worldParams) {
+    constructor(strategy, worldParams) {
+        this.strategy = strategy;
+
         const { grid, spawnSpots } = createGridFromShape(worldParams.shape, worldParams.names);
         this.grid = grid;
-        this.spawnSpots = spawnSpots;
 
         this.gameWidth = grid[0].length;
         this.gameHeight = grid.length;
@@ -213,10 +244,10 @@ class PathfindingInstance {
             this.gameHeight * GRID_SCALE * ZOOM + TEXT_SPACE * ZOOM,
         );
 
-        this.start = spawnSpots[0];
-        this.target = worldParams.target;
+        this.start = worldParams.start ?? spawnSpots[0];
+        this.target = worldParams.target ?? grid.endSpot;
 
-        const isTargetSpot = pos => pos.x === worldParams.target.x && pos.y === worldParams.target.y;
+        const isTargetSpot = pos => pos.x === this.target.x && pos.y === this.target.y;
 
         const search = dfsSetup(this.grid, this.start, () => true, isTargetSpot);
         search.paused = true;
@@ -232,7 +263,7 @@ class PathfindingInstance {
         }
 
         if (!this.search.done) {
-            dfs(this.grid, this.search);
+            dfs(this.grid, this.search, this.strategy);
 
             if (this.search.done) {
                 this.channel.playFallingNote(600, 1800, 600, 0.1);
@@ -304,7 +335,6 @@ class PathfindingInstance {
             const row = this.grid[r];
 
             for (let c = 0; c < row.length; c++) {
-                // const cell = row[c];
                 const int = coordToInt(this.grid, { x: c, y: r });
 
                 if (this.search.visited.has(int)) {
@@ -381,8 +411,9 @@ class PathfindingInstance {
         ctx.fillStyle = 'white';
         const y = this.canvas.height - 40;
         ctx.fillText(text, 4, y);
-        ctx.fillText(`Trail length: ${this.search.trail.length}`, 290, y);
-        ctx.fillText(`Queue size: ${this.search.queue.length}`, 550, y);
+        ctx.fillText(`Path length: ${this.search.trail.length}`, 290, y);
+        const structure = this.strategy === 'dfs' ? 'Stack' : 'Queue';
+        ctx.fillText(`${structure} size: ${this.search.queue.length}`, 550, y);
     }
 }
 
@@ -392,13 +423,17 @@ const mainFunction = () => {
     const height = canvas.height;
 
     const pfs = [
-        new PathfindingInstance({ shape: SHAPE, names: NAMES, target: { x: 11, y: 3 }}),
-        new PathfindingInstance({ shape: SHAPE, names: NAMES, target: { x: 11, y: 3 }}),
-        new PathfindingInstance({ shape: SHAPE, names: NAMES, target: { x: 11, y: 3 }}),
+        new PathfindingInstance('bfs', { shape: SHAPE, names: NAMES, start: { x: 34, y: 13 }, target: { x: 31, y: 30 } }),
+        new PathfindingInstance('bfs', { shape: SHAPE, names: NAMES, start: { x: 31, y: 30 }, target: { x: 34, y: 13 } }),
+        new PathfindingInstance('bfs', { shape: SHAPE2, names: NAMES, start: { x: 18, y: 9 }, target: { x: 18, y: 25 }}),
+        new PathfindingInstance('bfs', { shape: SHAPE2, names: NAMES }),
+        // new PathfindingInstance('bfs', { shape: SHAPE, names: NAMES }),
     ];
 
     pfs.forEach(pf => {
-        document.getElementById('control-panel').appendChild(pf.canvas.canvas);
+        document.getElementById(pf.strategy).appendChild(pf.canvas.canvas);
+        pf.canvas.canvas.setAttribute('width', pf.canvas.width);
+        // pf.canvas.canvas.style = `width: ${pf.canvas.width}px`;
     });
 
     const innerScale = 2.5;
@@ -423,27 +458,17 @@ const mainFunction = () => {
             const pf = pfs[i];
             pf.draw();
 
-            ctx.save();
-            ctx.translate(
-                width / 2 - pf.canvas.width / 2,
-                height / 2 + 108 - pf.canvas.height * pfs.length / 2 + i * pf.canvas.height,
-            );
-
             if (pf.search.done) {
-                ctx.translate(pf.canvas.width / 2, pf.canvas.height / 2);
                 if (pf.search.trail.length === bestScore) {
-                    ctx.scale(1.05, 1.05);
+                    pf.canvas.canvas.classList.add('winner');
                 } else {
-                    ctx.filter = 'opacity(50%)';
-                    ctx.scale(0.93, 0.93);
+                    pf.canvas.canvas.classList.remove('winner');
+                    pf.canvas.canvas.classList.add('loser');
                 }
-                ctx.translate(-pf.canvas.width / 2, -pf.canvas.height / 2);
+            } else if (pf.search.backtracking && pf.search.trail.length > bestScore) {
+                pf.canvas.canvas.classList.remove('winner');
+                pf.canvas.canvas.classList.add('loser');
             }
-
-            ctx.drawImage(pf.canvas.canvas, 0, 0);
-
-            ctx.filter = 'none';
-            ctx.restore();
         }
     };
 

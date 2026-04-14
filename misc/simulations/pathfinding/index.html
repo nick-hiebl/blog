@@ -5,8 +5,22 @@
     </head>
     <body>
         <div id="title-box">
-            <h1>Depth First Search</h1>
-            <div>Simulating multiple runs to highlight potential variance</div>
+            <h1>Breadth-First Search</h1>
+            <!-- <div>Simulating multiple runs to highlight potential variance</div> -->
+        </div>
+        <div id="canvas-box">
+            <!-- <h3>Depth-First Search</h3>
+            <span>Continues traversing until it gets stuck, then backtracks.</span>
+            <span>Therefore it often explores fewer nodes along the way, but may find a winding path.</span>
+            <div class="canvas-grid" id="dfs">
+            </div> -->
+            <!-- <h3>Breadth-First Search</h3> -->
+            <span>BFS visits all nodes in order of closeness to the start.</span>
+            <span>This means it may get "distracted" or over-invest time in large open spaces.</span>
+            <span>See how slow BFS is when starting in an enclosed area vs. a wide open area.</span>
+            <br />
+            <div class="canvas-grid" id="bfs">
+            </div>
         </div>
         <canvas id="canvas" width="1080" height="1920"></canvas>
         <div id="control-panel">
