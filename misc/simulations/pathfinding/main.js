@@ -241,13 +241,15 @@ const mainFunction = () => {
                 search.paused = true;
             }
 
-            if (search.backtracking) {
+            if (search.done) {
+                beepChannel.playFallingNote(600, 1800, 600, 0.07);
+            } else if (search.backtracking) {
                 const head = search.trail[search.trail.length - 1];
 
                 if (head) {
                     const distToStart = euclideanDistance(head, start);
                     const note = (distToStart * 4 + 200);
-                    beepChannel.playFallingNote(note, note, 0.05, 0.03);
+                    beepChannel.playFallingNote(note, note, 1, 0.03);
                 }
             } else {
                 const head = search.queue.head();
@@ -255,7 +257,7 @@ const mainFunction = () => {
                 if (head) {
                     const distToEnd = euclideanDistance(head, targetPos);
                     const note = (distToEnd * 4 + 200);
-                    beepChannel.playFallingNote(note, note, 0.05, 0.03);
+                    beepChannel.playFallingNote(note, note, 1, 0.03);
                 }
             }
         }
@@ -364,7 +366,7 @@ const mainFunction = () => {
         ctx.stroke();
 
         const head = search.queue.head();
-        if (head && !search.done) {
+        if (head && !search.done && !search.backtracking) {
             ctx.strokeStyle = 'white';
             ctx.beginPath();
 

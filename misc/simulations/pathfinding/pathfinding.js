@@ -89,19 +89,20 @@ const dfs = (grid, state) => {
             const cell = grid[neighbour.y][neighbour.x];
             if (state.endCondition(neighbour, cell)) {
                 state.visited.add(neighbourInt);
-                state.paused = true;
+                // state.paused = true;
 
                 state.backtracking = true;
                 state.trail.push(neighbour);
             } else if (state.walkable(neighbour, cell)) {
                 state.queue.pushFront(neighbour);
+                // state.queue.push(neighbour);
             } else {
                 continue;
             }
         }
 
         if (!someNeighbourGood) {
-            state.paused = true;
+            // state.paused = true;
         }
     }
 };
