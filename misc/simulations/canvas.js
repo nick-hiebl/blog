@@ -1,6 +1,8 @@
 class Canvas {
-    static create() {
+    static create(width, height) {
         const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
 
         return new Canvas(canvas);
     }
@@ -14,6 +16,14 @@ class Canvas {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
+    }
+
+    get width() {
+        return this.canvas.width;
+    }
+
+    get height() {
+        return this.canvas.height;
     }
 
     drawRoundedRectangle(x, y, width, height, radii) {

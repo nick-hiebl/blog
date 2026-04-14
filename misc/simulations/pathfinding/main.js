@@ -114,8 +114,8 @@ const NAMES = [
     'South East',
 ];
 
-const createGridFromShape = () => {
-    const procShape = SHAPE.split('\n').filter(v => !!v);
+const createGridFromShape = (shape, names) => {
+    const procShape = shape.split('\n').filter(v => !!v);
 
     const height = procShape.length;
     const width = procShape.reduce((widest, row) => {
@@ -135,8 +135,8 @@ const createGridFromShape = () => {
 
         for (let c = 0; c < width; c++) {
             const letter = procShape[r][c];
-            if (letter in NAMES) {
-                spawnSpots.push({ x: c, y: r, name: NAMES[letter] });
+            if (letter in names) {
+                spawnSpots.push({ x: c, y: r, name: names[letter] });
             } else if (letter === 'V') {
                 grid.endSpot = { x: c, y: r };
             }
@@ -195,75 +195,77 @@ const createGrid = (width, height) => {
 
 const GRID_SCALE = 10;
 
-const mainFunction = () => {
-    const canvas = document.getElementById('canvas');
+const ZOOM = 2;
 
-    canvas.addEventListener('mousemove', e => {
-        const rect = canvas.getBoundingClientRect();
-        mouse.x = e.clientX - rect.left;
-        mouse.y = e.clientY - rect.top;
-    });
+const TEXT_SPACE = 36;
 
-    const ctx = canvas.getContext('2d');
+class PathfindingInstance {
+    constructor(worldParams) {
+        const { grid, spawnSpots } = createGridFromShape(worldParams.shape, worldParams.names);
+        this.grid = grid;
+        this.spawnSpots = spawnSpots;
 
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
+        this.gameWidth = grid[0].length;
+        this.gameHeight = grid.length;
 
-    const { grid, spawnSpots } = createGridFromShape();
+        this.canvas = Canvas.create(
+            this.gameWidth * GRID_SCALE * ZOOM,
+            this.gameHeight * GRID_SCALE * ZOOM + TEXT_SPACE * ZOOM,
+        );
 
-    const gameWidth = grid[0].length;
-    const gameHeight = grid.length;
+        this.start = spawnSpots[0];
+        this.target = worldParams.target;
 
-    // if (spawnSpots.length > 0) {
-    //     spawnSpots.forEach(pos => spawnAgent(pos, pos.name));
-    // } else {
-    //     spawnAgent({ x: Math.floor(gameWidth / 2), y: Math.floor(gameHeight / 2) });
-    // }
+        const isTargetSpot = pos => pos.x === worldParams.target.x && pos.y === worldParams.target.y;
 
-    const start = spawnSpots[0];
+        const search = dfsSetup(this.grid, this.start, () => true, isTargetSpot);
+        search.paused = true;
 
-    const targetPos = { x: 11, y: 3 };
-    const isTargetSpot = pos => pos.x === targetPos.x && pos.y === targetPos.y;
+        this.search = search;
 
-    const search = dfsSetup(grid, start, () => true, (pos) => isTargetSpot(pos));
-    search.paused = true;
+        this.channel = new Channel('sine');
+    }
 
-    let pauseOnEvery = false;
-
-    const update = () => {
-        if (search.paused) {
+    update() {
+        if (this.search.paused) {
             return;
         }
 
-        if (!search.done) {
-            dfs(grid, search);
-            if (pauseOnEvery) {
-                search.paused = true;
-            }
+        if (!this.search.done) {
+            dfs(this.grid, this.search);
 
-            if (search.done) {
-                beepChannel.playFallingNote(600, 1800, 600, 0.07);
-            } else if (search.backtracking) {
-                const head = search.trail[search.trail.length - 1];
+            if (this.search.done) {
+                this.channel.playFallingNote(600, 1800, 600, 0.07);
+            } else if (this.search.backtracking) {
+                const head = this.search.trail[this.search.trail.length - 1];
 
                 if (head) {
-                    const distToStart = euclideanDistance(head, start);
-                    const note = (distToStart * 4 + 200);
-                    beepChannel.playFallingNote(note, note, 1, 0.03);
+                    const distToStart = euclideanDistance(head, this.start);
+                    const note = distToStart * 4 + 200;
+                    this.channel.playFallingNote(note, note, 1, 0.03);
                 }
             } else {
-                const head = search.queue.head();
+                const head = this.search.queue.head();
 
                 if (head) {
-                    const distToEnd = euclideanDistance(head, targetPos);
-                    const note = (distToEnd * 4 + 200);
+                    const distToEnd = euclideanDistance(head, this.target);
+                    const note = distToEnd * 4 + 200;
                     beepChannel.playFallingNote(note, note, 1, 0.03);
                 }
             }
         }
-    };
+    }
 
-    const draw = () => {
+    draw() {
+        const ctx = this.canvas.ctx;
+
+        ctx.fillStyle = 'black';
+
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        ctx.save();
+        ctx.scale(ZOOM, ZOOM);
+
         const rectInGrid = (x, y) => {
             ctx.rect(x * GRID_SCALE + 1, y * GRID_SCALE + 1, GRID_SCALE - 2, GRID_SCALE - 2);
         };
@@ -271,8 +273,8 @@ const mainFunction = () => {
         // Empty square pass
         ctx.beginPath();
         ctx.fillStyle = '#181818';
-        for (let r = 0; r < grid.length; r++) {
-            const row = grid[r];
+        for (let r = 0; r < this.grid.length; r++) {
+            const row = this.grid[r];
 
             for (let c = 0; c < row.length; c++) {
                 const cell = row[c];
@@ -285,26 +287,27 @@ const mainFunction = () => {
         ctx.fill();
 
         const gradient = ctx.createRadialGradient(
-            targetPos.x * GRID_SCALE,
-            targetPos.y * GRID_SCALE,
+            this.target.x * GRID_SCALE,
+            this.target.y * GRID_SCALE,
             GRID_SCALE,
-            gameWidth * GRID_SCALE / 2,
-            gameHeight * GRID_SCALE / 2,
-            Math.hypot(gameWidth, gameHeight) * GRID_SCALE / 2,
+            this.canvas.width / ZOOM / 2,
+            this.canvas.height / ZOOM / 2,
+            Math.hypot(this.canvas.width / ZOOM, this.canvas.height / ZOOM) / 2,
         );
+
         gradient.addColorStop(0, 'red');
         gradient.addColorStop(1, 'blue');
 
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        for (let r = 0; r < grid.length; r++) {
-            const row = grid[r];
+        for (let r = 0; r < this.grid.length; r++) {
+            const row = this.grid[r];
 
             for (let c = 0; c < row.length; c++) {
                 // const cell = row[c];
-                const int = coordToInt(grid, { x: c, y: r });
+                const int = coordToInt(this.grid, { x: c, y: r });
 
-                if (search.visited.has(int)) {
+                if (this.search.visited.has(int)) {
                     rectInGrid(c, r);
                 }
             }
@@ -313,22 +316,19 @@ const mainFunction = () => {
 
         ctx.strokeStyle = 'hsla(0, 0%, 100%, 50%)';
         ctx.beginPath();
-        for (let r = 0; r < grid.length; r++) {
-            const row = grid[r];
+        for (let r = 0; r < this.grid.length; r++) {
+            const row = this.grid[r];
 
             for (let c = 0; c < row.length; c++) {
                 // const cell = row[c];
-                const int = coordToInt(grid, { x: c, y: r });
+                const int = coordToInt(this.grid, { x: c, y: r });
 
-                if (search.from.has(int)) {
-                    const src = search.from.get(int);
+                if (this.search.from.has(int)) {
+                    const src = this.search.from.get(int);
 
                     if (src === -1) {
                         continue;
                     }
-                    // const b = intToCoord(grid, src);
-                    // ctx.moveTo((b.x + 0.5) * GRID_SCALE, (b.y + 0.5) * GRID_SCALE);
-                    // ctx.lineTo((c + 0.5) * GRID_SCALE, (r + 0.5) * GRID_SCALE);
 
                     if (src === int - 1) {
                         ctx.moveTo((c + 0.7) * GRID_SCALE, (r + 0.25) * GRID_SCALE);
@@ -354,47 +354,97 @@ const mainFunction = () => {
 
         ctx.beginPath();
         ctx.fillStyle = 'white';
-        for (const pos of search.trail) {
+        for (const pos of this.search.trail) {
             rectInGrid(pos.x, pos.y);
         }
         ctx.fill();
 
         ctx.strokeStyle = 'gold';
         ctx.beginPath();
-        rectInGrid(start.x, start.y);
-        rectInGrid(targetPos.x, targetPos.y);
+        rectInGrid(this.start.x, this.start.y);
+        rectInGrid(this.target.x, this.target.y);
         ctx.stroke();
 
-        const head = search.queue.head();
-        if (head && !search.done && !search.backtracking) {
+        const head = this.search.queue.head();
+        if (head && !this.search.done && !this.search.backtracking) {
             ctx.strokeStyle = 'white';
             ctx.beginPath();
 
             rectInGrid(head.x, head.y);
             ctx.stroke();
         }
-    };
+
+        ctx.restore();
+        
+        const text = `Nodes explored: ${this.search.visited.size}`;
+        ctx.font = '24px Segoe UI';
+        ctx.fillStyle = 'white';
+        const y = this.canvas.height - 40;
+        ctx.fillText(text, 4, y);
+        ctx.fillText(`Trail length: ${this.search.trail.length}`, 260, y);
+        ctx.fillText(`Queue size: ${this.search.queue.length}`, 480, y);
+    }
+}
+
+const mainFunction = () => {
+    const canvas = Canvas.fromId('canvas');
+    const width = canvas.width;
+    const height = canvas.height;
+
+    const pfs = [
+        new PathfindingInstance({ shape: SHAPE, names: NAMES, target: { x: 11, y: 3 }}),
+        new PathfindingInstance({ shape: SHAPE, names: NAMES, target: { x: 11, y: 3 }}),
+        new PathfindingInstance({ shape: SHAPE, names: NAMES, target: { x: 11, y: 3 }}),
+    ];
+
+    pfs.forEach(pf => {
+        document.getElementById('control-panel').appendChild(pf.canvas.canvas);
+    });
 
     const innerScale = 2.5;
 
-    const innerScreenWidth = gameWidth * GRID_SCALE * innerScale;
-    const innerScreenHeight = gameHeight * GRID_SCALE * innerScale;
+    const { grid } = createGridFromShape(SHAPE, NAMES);
+    const gameWidth = grid[0].length;
+    const gameHeight = grid.length;
 
     const mainDraw = () => {
+        const ctx = canvas.ctx;
         ctx.fillStyle = 'black';
         ctx.fillRect(0, 0, width, height);
 
-        ctx.save();
-        ctx.translate(
-            width / 2 - innerScreenWidth / 2,
-            height / 2 - innerScreenHeight / 2,
-        );
+        const bestScore = pfs.reduce((best, pf) => {
+            if (pf.search.done) {
+                return Math.min(best, pf.search.trail.length);
+            }
+            return best;
+        }, Infinity);
 
-        ctx.scale(innerScale, innerScale);
+        for (let i = 0; i < pfs.length; i++) {
+            const pf = pfs[i];
+            pf.draw();
 
-        draw();
+            ctx.save();
+            ctx.translate(
+                width / 2 - pf.canvas.width / 2,
+                height / 2 + 108 - pf.canvas.height * pfs.length / 2 + i * pf.canvas.height,
+            );
 
-        ctx.restore();
+            if (pf.search.done) {
+                ctx.translate(pf.canvas.width / 2, pf.canvas.height / 2);
+                if (pf.search.trail.length === bestScore) {
+                    ctx.scale(1.05, 1.05);
+                } else {
+                    ctx.filter = 'opacity(50%)';
+                    ctx.scale(0.9, 0.9);
+                }
+                ctx.translate(-pf.canvas.width / 2, -pf.canvas.height / 2);
+            }
+
+            ctx.drawImage(pf.canvas.canvas, 0, 0);
+
+            ctx.filter = 'none';
+            ctx.restore();
+        }
     };
 
     let lastTime = null;
@@ -408,8 +458,6 @@ const mainFunction = () => {
 
         mainDraw(elapsed);
 
-        // eventQueue.update(elapsed);
-
         lastTime = now;
 
         if (firstLoop) {
@@ -418,9 +466,6 @@ const mainFunction = () => {
                 lastTime = performance.now();
 
                 requestAnimationFrame(mainLoop);
-                // agents.forEach(agent => {
-                //     agent.lastMovedTime = performance.now();
-                // });
             }, 20);
         } else {
             requestAnimationFrame(mainLoop);
@@ -432,13 +477,15 @@ const mainFunction = () => {
         requestAnimationFrame(mainLoop);
 
         setInterval(() => {
-            update();
+            pfs.forEach(pf => pf.update());
         }, 50);
     }, 100);
 
     const button = document.getElementById('click-me');
     button.addEventListener('click', () => {
-        search.paused = false;
+        pfs.forEach(pf => {
+            pf.search.paused = false;
+        });
     });
     document.getElementById('pause-on-every').addEventListener('change', e => {
         pauseOnEvery = e.currentTarget.checked;

@@ -33,4 +33,8 @@ class DoubleEndedQueue {
             throw new Error('No items to pop!');
         }
     }
+
+    get length() {
+        return this.tail.length + this.front.length;
+    }
 }
