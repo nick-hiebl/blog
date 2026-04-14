@@ -67,7 +67,6 @@ const dfs = (grid, state) => {
                 someNeighbourGood = true;
             }
 
-
             const cell = grid[neighbour.y][neighbour.x];
             if (state.endCondition(neighbour, cell)) {
                 state.visited.add(neighbourInt);
@@ -83,4 +82,11 @@ const dfs = (grid, state) => {
             state.paused = true;
         }
     }
+};
+
+const euclideanDistance = (pos1, pos2) => {
+    const xDiff = pos1.x - pos2.x;
+    const yDiff = pos1.y - pos2.y;
+
+    return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
 };

@@ -236,6 +236,15 @@ const mainFunction = () => {
             if (pauseOnEvery) {
                 search.paused = true;
             }
+
+            const head = search.queue.head();
+
+            if (head) {
+                const distToEnd = euclideanDistance(head, targetPos);
+                const note = (distToEnd * 4 + 200);
+                console.log('note', note);
+                beepChannel.playFallingNote(note, note, 0.05, 0.03);
+            }
         }
     };
 

@@ -409,4 +409,4 @@ const euclideanDistance = (pos1, pos2) => {
     const yDiff = pos1.y - pos2.y;
 
     return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
-}
+};
