@@ -28,6 +28,7 @@ function roughShuffle(array, maxStep) {
 const TEXT_HEIGHT = 28;
 const FRAME_DUR = 5;
 const WIDTH = 1000;
+const HEIGHT = 400;
 const NUM_ITEMS = 500;
 
 class SortingInstance {
@@ -40,7 +41,7 @@ class SortingInstance {
 
         this.sort = new Sort(this.data);
 
-        this.canvas = Canvas.create(WIDTH, 1000 + TEXT_HEIGHT);
+        this.canvas = Canvas.create(WIDTH, HEIGHT + TEXT_HEIGHT);
 
         this.channel = new Channel('sine');
     }
@@ -130,7 +131,7 @@ const mainFunction = () => {
         // new SortingInstance('bubble', data, Selection),
         // new SortingInstance('bubble', data, Bubble),
         new SortingInstance('bubble', data, Insertion),
-        // new SortingInstance('bubble', data, Quick),
+        new SortingInstance('bubble', data, Quick),
     ];
 
     window.sorts = sorts;
