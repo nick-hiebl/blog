@@ -1,30 +1,21 @@
-let tries = 0;
 function quickSort(data, lo = 0, hi = data.length) {
-    if (tries > 100) {return}
-    tries++;
-    const pivot = lo;
+    if (lo + 1 >= hi) return;
+    // Use first item as pivot
     let i = lo + 1;
     let j = hi;
     while (i < j) {
-        if (data[i] >= data[pivot]) {
+        if (data[i] >= data[lo]) {
             j--;
-            console.log(data, `[${i}] = ${data[i]}, [${j}] = ${data[j]}, ${data[pivot]}`);
             swap(data, i, j);
         } else {
             i++;
         }
     }
 
-    console.log('PIVOT', data, `[${pivot}] = ${data[pivot]}, [${i - 1}] = ${data[i - 1]}`);
-    swap(data, pivot, i - 1);
-    if (lo + 1 < i) {
-        console.log('RecursingL', pivot, i - 1);
-        quickSort(data, pivot, i - 1);
-    }
-    if (lo + 1 < hi - 1) {
-        console.log('RecursingR', i+1, hi);
-        quickSort(data, i+1, hi);
-    }
+    // Move pivot to correct spot
+    swap(data, lo, i - 1);
+    quickSort(data, lo, i - 1);
+    quickSort(data, i, hi);
 }
 
 function bubbleSort(data) {
