@@ -88,15 +88,18 @@ const mainFunction = () => {
     const width = canvas.width;
     const height = canvas.height;
 
-    const data = new Array(50).fill(0).map((_, index) => index + 5);
+    const data = new Array(20).fill(0).map((_, index) => index + 5);
     shuffle(data);
 
     const sorts = [
+        new SortingInstance('bubble', data, Insertion),
         new SortingInstance('bubble', data, Bubble),
         // new SortingInstance('bubble', data, Bubble),
         // new SortingInstance('bubble', data, Bubble),
         // new SortingInstance('bubble', data, Bubble),
     ];
+
+    window.sorts = sorts;
 
     sorts.forEach(pf => {
         document.getElementById(pf.sortName).appendChild(pf.canvas.canvas);
