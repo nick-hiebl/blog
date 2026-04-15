@@ -26,7 +26,7 @@ class SortingInstance {
 
         this.sort = new Sort(this.data);
 
-        this.canvas = Canvas.create(1000, 500 + TEXT_HEIGHT);
+        this.canvas = Canvas.create(1000, 400 + TEXT_HEIGHT);
     }
 
     update() {
@@ -48,15 +48,21 @@ class SortingInstance {
 
         const sliceWidth = this.canvas.width / this.data.length;
         const unitHeight = (this.canvas.height - TEXT_HEIGHT) / this.max;
-        const inset = 1;
+        const inset = 0;
 
         const fillBar = i => {
-            this.canvas.drawRoundedRectangle(
-                i * sliceWidth + inset,
-                (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight + inset,
-                sliceWidth - 2 * inset,
-                this.data[i] * unitHeight - 2 * inset,
-                { all: 5 },
+            // this.canvas.drawRoundedRectangle(
+            //     i * sliceWidth + inset,
+            //     (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight + inset,
+            //     sliceWidth - 2 * inset,
+            //     this.data[i] * unitHeight - 2 * inset,
+            //     { all: 5 },
+            // );
+            ctx.rect(
+                i * sliceWidth,
+                (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight,
+                sliceWidth - inset,
+                this.data[i] * unitHeight,
             );
         };
 
@@ -87,12 +93,13 @@ const mainFunction = () => {
     const width = canvas.width;
     const height = canvas.height;
 
-    const data = new Array(150).fill(0).map((_, index) => index + 5);
+    const data = new Array(500).fill(0).map((_, index) => index + 5);
     shuffle(data);
 
     const sorts = [
-        new SortingInstance('bubble', data, Insertion),
+        new SortingInstance('bubble', data, Selection),
         new SortingInstance('bubble', data, Bubble),
+        new SortingInstance('bubble', data, Insertion),
         new SortingInstance('bubble', data, Quick),
         // new SortingInstance('bubble', data, Bubble),
         // new SortingInstance('bubble', data, Bubble),

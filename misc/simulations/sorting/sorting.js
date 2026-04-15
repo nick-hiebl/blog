@@ -26,12 +26,47 @@ const swap = (array, i, j) => {
 class Selection extends Sort {
     setup() {
         this.hi = this.data.length;
-        this.walker = 0;
+        this.walker = 1;
         this.candidate = 0;
+
+        this.name = 'Selection sort';
     }
 
     step() {
+        if (this.walker === this.hi) {
+            this.hi--;
+            swap(this.data, this.candidate, this.hi);
+            this.swaps++;
 
+            this.candidate = 0;
+            this.walker = 1;
+
+            if (this.hi === 0) {
+                this.done = true;
+            }
+
+            return;
+        }
+
+        this.comparisons++;
+        if (this.data[this.walker] > this.data[this.candidate]) {
+            this.candidate = this.walker;
+        }
+
+        this.walker++;
+        return;
+    }
+
+    specialColumns() {
+        if (this.done) {
+            return [];
+        }
+
+        return [
+            { color: 'green', index: this.hi },
+            { color: 'yellow', index: this.walker },
+            { color: 'red', index: this.candidate },
+        ];
     }
 }
 
@@ -40,6 +75,8 @@ class Bubble extends Sort {
         this.sortedAfter = this.data.length;
         this.innerLoop = 0;
         this.anySwaps = false;
+
+        this.name = 'Bubble sort';
     }
 
     step() {
@@ -76,6 +113,10 @@ class Bubble extends Sort {
     }
 
     specialColumns() {
+        if (this.done) {
+            return [];
+        }
+
         return [
             { color: 'green', index: this.sortedAfter },
             { color: 'gold', index: this.innerLoop },
@@ -87,9 +128,15 @@ class Insertion extends Sort {
     setup() {
         this.backIndex = -1;
         this.primaryIndex = 0;
+
+        this.name = 'Insertion sort';
     }
 
     step() {
+        if (this.primaryIndex >= this.data.length) {
+            this.done = true;
+        }
+
         if (this.backIndex !== -1) {
             if (this.backIndex === 0) {
                 this.primaryIndex++;
@@ -123,10 +170,10 @@ class Insertion extends Sort {
     }
 
     specialColumns() {
-        const indices = [{ color: 'skyblue', index: this.primaryIndex }];
+        const indices = [{ color: 'red', index: this.primaryIndex }];
 
         if (this.backIndex !== -1) {
-            indices.push({ color: 'pink', index: this.backIndex });
+            indices.push({ color: 'yellow', index: this.backIndex });
         }
 
         return indices;
@@ -136,6 +183,8 @@ class Insertion extends Sort {
 class Quick extends Sort {
     setup() {
         this.stack = [this.createRange(0, this.data.length)];
+
+        this.name = 'Quicksort';
     }
 
     createRange(lo, hi) {
