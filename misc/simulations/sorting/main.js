@@ -83,8 +83,9 @@ class SortingInstance {
         ctx.font = '20px Segoe UI';
         ctx.fillStyle = 'white';
         const y = this.canvas.height - 4;
-        ctx.fillText(`Comparisons: ${this.sort.comparisons}`, 4, y);
-        ctx.fillText(`Swaps: ${this.sort.swaps}`, 500, y);
+        ctx.fillText(this.sort.name, 10, y);
+        ctx.fillText(`Comparisons: ${this.sort.comparisons}`, 440, y);
+        ctx.fillText(`Swaps: ${this.sort.swaps}`, 880, y);
     }
 }
 

@@ -230,8 +230,8 @@ class Quick extends Sort {
         this.comparisons++;
         if (this.data[range.loSection] > this.data[range.pivot]) {
             range.hiSection--;
-            swap(this.data, range.hiSection, range.loSection);
             this.swaps++;
+            swap(this.data, range.hiSection, range.loSection);
             return;
         } else {
             range.loSection++;
