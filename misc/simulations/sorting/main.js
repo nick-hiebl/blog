@@ -15,6 +15,7 @@ function shuffle(array) {
 }
 
 const TEXT_HEIGHT = 28;
+const FRAME_DUR = 50;
 
 class SortingInstance {
     constructor(sortName, data, Sort) {
@@ -26,7 +27,9 @@ class SortingInstance {
 
         this.sort = new Sort(this.data);
 
-        this.canvas = Canvas.create(1000, 400 + TEXT_HEIGHT);
+        this.canvas = Canvas.create(1024, 1000 + TEXT_HEIGHT);
+
+        this.channel = new Channel('sine');
     }
 
     update() {
@@ -34,8 +37,12 @@ class SortingInstance {
             return;
         }
 
-        if (!this.sort.done) {
-            this.sort.step();
+        if (!this.sort.doneWalking) {
+            this.sort.update();
+            const noteIndex = this.sort.noteIndex();
+            if (this.data[noteIndex]) {
+                this.channel.playNote(this.data[noteIndex] / this.max, FRAME_DUR, 0.02);
+            }
         }
     }
 
@@ -48,22 +55,29 @@ class SortingInstance {
 
         const sliceWidth = this.canvas.width / this.data.length;
         const unitHeight = (this.canvas.height - TEXT_HEIGHT) / this.max;
-        const inset = 0;
+        const inset = 1;
 
         const fillBar = i => {
-            // this.canvas.drawRoundedRectangle(
-            //     i * sliceWidth + inset,
-            //     (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight + inset,
-            //     sliceWidth - 2 * inset,
-            //     this.data[i] * unitHeight - 2 * inset,
-            //     { all: 5 },
-            // );
-            ctx.rect(
-                i * sliceWidth,
-                (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight,
-                sliceWidth - inset,
-                this.data[i] * unitHeight,
+            const x = i * sliceWidth;
+            const y = (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight;
+            /* Draw as rounded rectangles */
+            this.canvas.drawRoundedRectangle(
+                i * sliceWidth + inset,
+                (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight + inset,
+                sliceWidth - 2 * inset,
+                this.data[i] * unitHeight - 2 * inset,
+                { all: 5 },
             );
+            /* Draw as perfect rectangles */
+            // ctx.rect(
+            //     i * sliceWidth,
+            //     (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight,
+            //     sliceWidth - inset,
+            //     this.data[i] * unitHeight,
+            // );
+            /* Draw as circles */
+            // ctx.moveTo(x, y);
+            // ctx.ellipse(x, y, sliceWidth / 2, sliceWidth / 2, 0, 0, 2 * Math.PI);
         };
 
         ctx.fillStyle = 'white';
@@ -73,7 +87,7 @@ class SortingInstance {
         }
         ctx.fill();
 
-        for (const { color, index } of this.sort.specialColumns()) {
+        for (const { color, index } of this.sort.getColumns()) {
             ctx.fillStyle = color;
             ctx.beginPath();
             fillBar(index);
@@ -94,17 +108,14 @@ const mainFunction = () => {
     const width = canvas.width;
     const height = canvas.height;
 
-    const data = new Array(500).fill(0).map((_, index) => index + 5);
+    const data = new Array(32).fill(0).map((_, index) => index + 1);
     shuffle(data);
 
     const sorts = [
-        new SortingInstance('bubble', data, Selection),
-        new SortingInstance('bubble', data, Bubble),
-        new SortingInstance('bubble', data, Insertion),
+        // new SortingInstance('bubble', data, Selection),
+        // new SortingInstance('bubble', data, Bubble),
+        // new SortingInstance('bubble', data, Insertion),
         new SortingInstance('bubble', data, Quick),
-        // new SortingInstance('bubble', data, Bubble),
-        // new SortingInstance('bubble', data, Bubble),
-        // new SortingInstance('bubble', data, Bubble),
     ];
 
     window.sorts = sorts;
@@ -175,14 +186,23 @@ const mainFunction = () => {
 
         setInterval(() => {
             sorts.forEach(pf => pf.update());
-        }, 50);
+        }, FRAME_DUR);
     }, 100);
 
-    const button = document.getElementById('click-me');
-    button.addEventListener('click', () => {
+    const unpause = () => {
         sorts.forEach(pf => {
             pf.sort.paused = false;
         });
+    };
+
+    const button = document.getElementById('click-me');
+    button.addEventListener('click', () => {
+        unpause();
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === ' ') {
+            unpause();
+        }
     });
     document.getElementById('pause-on-every').addEventListener('change', e => {
         pauseOnEvery = e.currentTarget.checked;

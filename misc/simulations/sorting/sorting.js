@@ -1,8 +1,56 @@
+let tries = 0;
+function quickSort(data, lo = 0, hi = data.length) {
+    if (tries > 100) {return}
+    tries++;
+    const pivot = lo;
+    let i = lo + 1;
+    let j = hi;
+    while (i < j) {
+        if (data[i] >= data[pivot]) {
+            j--;
+            console.log(data, `[${i}] = ${data[i]}, [${j}] = ${data[j]}, ${data[pivot]}`);
+            swap(data, i, j);
+        } else {
+            i++;
+        }
+    }
+
+    console.log('PIVOT', data, `[${pivot}] = ${data[pivot]}, [${i - 1}] = ${data[i - 1]}`);
+    swap(data, pivot, i - 1);
+    if (lo + 1 < i) {
+        console.log('RecursingL', pivot, i - 1);
+        quickSort(data, pivot, i - 1);
+    }
+    if (lo + 1 < hi - 1) {
+        console.log('RecursingR', i+1, hi);
+        quickSort(data, i+1, hi);
+    }
+}
+
+function bubbleSort(data) {
+    for (let endOfUnsorted = data.length; endOfUnsorted > 0; endOfUnsorted--) {
+        let anySwaps = false;
+
+        for (let i = 0; i < endOfUnsorted; i++) {
+            if (data[i] > data[i + 1]) {
+                swap(data, i, i + 1);
+                anySwaps = true;
+            }
+        }
+
+        if (!anySwaps) {
+            break;
+        }
+    }
+}
+
 class Sort {
     constructor(data) {
         this.data = data;
         this.paused = true;
         this.done = false;
+        this.doneWalking = false;
+        this.finalWalkIndex = 0;
 
         this.comparisons = 0;
         this.swaps = 0;
@@ -12,6 +60,35 @@ class Sort {
 
     setup() {
         //
+    }
+
+    update() {
+        if (!this.done) {
+            this.step();
+        } else if (!this.doneWalking) {
+            this.finalWalkIndex++;
+            if (this.finalWalkIndex >= this.data.length) {
+                this.doneWalking = true;
+            }
+        }
+    }
+
+    getColumns() {
+        if (!this.done) {
+            return this.specialColumns();
+        } else if (!this.doneWalking) {
+            return [{ color: 'lime', index: this.finalWalkIndex }];
+        }
+
+        return [];
+    }
+
+    noteIndex() {
+        if (!this.done) {
+            return this.getNoteIndex();
+        } else if (!this.doneWalking) {
+            return this.finalWalkIndex;
+        }
     }
 
     specialColumns() {
@@ -63,10 +140,14 @@ class Selection extends Sort {
         }
 
         return [
-            { color: 'green', index: this.hi },
+            { color: 'green', index: this.hi - 1 },
             { color: 'yellow', index: this.walker },
             { color: 'red', index: this.candidate },
         ];
+    }
+
+    getNoteIndex() {
+        return this.walker;
     }
 }
 
@@ -121,6 +202,10 @@ class Bubble extends Sort {
             { color: 'green', index: this.sortedAfter },
             { color: 'gold', index: this.innerLoop },
         ];
+    }
+
+    getNoteIndex() {
+        return this.innerLoop + 1;
     }
 }
 
@@ -177,6 +262,14 @@ class Insertion extends Sort {
         }
 
         return indices;
+    }
+
+    getNoteIndex() {
+        if (this.backIndex !== -1) {
+            return this.backIndex - 1;
+        }
+
+        return this.primaryIndex;
     }
 }
 
@@ -251,5 +344,9 @@ class Quick extends Sort {
         }
 
         return [];
+    }
+
+    getNoteIndex() {
+        return this.stack[this.stack.length - 1]?.loSection;
     }
 }

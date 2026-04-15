@@ -54,12 +54,12 @@ button {
     top: 209px;
     width: 1080px;
     left: 9px;
-    height: 1320px;
+    height: 1520px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 16px;
+    gap: 80px;
 }
 
 .canvas-grid {
@@ -94,4 +94,9 @@ canvas.winner {
 canvas.loser {
     transform: scale(0.93);
     opacity: 50%;
+}
+
+img {
+    border: 16px solid #121314;
+    border-radius: 16px;
 }
