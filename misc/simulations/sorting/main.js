@@ -14,8 +14,21 @@ function shuffle(array) {
     }
 }
 
+function roughShuffle(array, maxStep) {
+    for (let i = 0; i < array.length - maxStep; i++) {
+        // Pick a remaining element...
+        const randomIndex = Math.floor(Math.random() * maxStep + i);
+
+        // And swap it with the current element.
+        [array[i], array[randomIndex]] = [
+            array[randomIndex], array[i]];
+    }
+}
+
 const TEXT_HEIGHT = 28;
-const FRAME_DUR = 50;
+const FRAME_DUR = 5;
+const WIDTH = 1000;
+const NUM_ITEMS = 500;
 
 class SortingInstance {
     constructor(sortName, data, Sort) {
@@ -27,7 +40,7 @@ class SortingInstance {
 
         this.sort = new Sort(this.data);
 
-        this.canvas = Canvas.create(1024, 1000 + TEXT_HEIGHT);
+        this.canvas = Canvas.create(WIDTH, 1000 + TEXT_HEIGHT);
 
         this.channel = new Channel('sine');
     }
@@ -55,26 +68,26 @@ class SortingInstance {
 
         const sliceWidth = this.canvas.width / this.data.length;
         const unitHeight = (this.canvas.height - TEXT_HEIGHT) / this.max;
-        const inset = 1;
+        const inset = 0;
 
         const fillBar = i => {
             const x = i * sliceWidth;
             const y = (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight;
             /* Draw as rounded rectangles */
-            this.canvas.drawRoundedRectangle(
-                i * sliceWidth + inset,
-                (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight + inset,
-                sliceWidth - 2 * inset,
-                this.data[i] * unitHeight - 2 * inset,
-                { all: 5 },
-            );
-            /* Draw as perfect rectangles */
-            // ctx.rect(
-            //     i * sliceWidth,
-            //     (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight,
-            //     sliceWidth - inset,
-            //     this.data[i] * unitHeight,
+            // this.canvas.drawRoundedRectangle(
+            //     i * sliceWidth + inset,
+            //     (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight + inset,
+            //     sliceWidth - 2 * inset,
+            //     this.data[i] * unitHeight - 2 * inset,
+            //     { all: 5 },
             // );
+            /* Draw as perfect rectangles */
+            ctx.rect(
+                i * sliceWidth,
+                (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight,
+                sliceWidth - inset,
+                this.data[i] * unitHeight,
+            );
             /* Draw as circles */
             // ctx.moveTo(x, y);
             // ctx.ellipse(x, y, sliceWidth / 2, sliceWidth / 2, 0, 0, 2 * Math.PI);
@@ -108,14 +121,16 @@ const mainFunction = () => {
     const width = canvas.width;
     const height = canvas.height;
 
-    const data = new Array(32).fill(0).map((_, index) => index + 1);
-    shuffle(data);
+    const data = new Array(NUM_ITEMS).fill(0).map((_, index) => index + 1);
+    // shuffle(data);
+    roughShuffle(data, 20);
+    // data.reverse();
 
     const sorts = [
         // new SortingInstance('bubble', data, Selection),
         // new SortingInstance('bubble', data, Bubble),
-        // new SortingInstance('bubble', data, Insertion),
-        new SortingInstance('bubble', data, Quick),
+        new SortingInstance('bubble', data, Insertion),
+        // new SortingInstance('bubble', data, Quick),
     ];
 
     window.sorts = sorts;
