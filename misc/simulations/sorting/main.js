@@ -14,6 +14,8 @@ function shuffle(array) {
     }
 }
 
+const TEXT_HEIGHT = 28;
+
 class SortingInstance {
     constructor(sortName, data, Sort) {
         this.sortName = sortName;
@@ -24,7 +26,7 @@ class SortingInstance {
 
         this.sort = new Sort(this.data);
 
-        this.canvas = Canvas.create(1000, 500);
+        this.canvas = Canvas.create(1000, 500 + TEXT_HEIGHT);
     }
 
     update() {
@@ -45,13 +47,13 @@ class SortingInstance {
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         const sliceWidth = this.canvas.width / this.data.length;
-        const unitHeight = this.canvas.height / this.max;
+        const unitHeight = (this.canvas.height - TEXT_HEIGHT) / this.max;
         const inset = 1;
 
         const fillBar = i => {
             this.canvas.drawRoundedRectangle(
                 i * sliceWidth + inset,
-                this.canvas.height - this.data[i] * unitHeight + inset,
+                (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight + inset,
                 sliceWidth - 2 * inset,
                 this.data[i] * unitHeight - 2 * inset,
                 { all: 5 },
@@ -72,14 +74,11 @@ class SortingInstance {
             ctx.fill();
         }
 
-        // const text = `Nodes explored: ${this.sort.visited.size}`;
-        // ctx.font = '24px Segoe UI';
-        // ctx.fillStyle = 'white';
-        // const y = this.canvas.height - 40;
-        // ctx.fillText(text, 4, y);
-        // ctx.fillText(`Path length: ${this.sort.trail.length}`, 290, y);
-        // const structure = this.strategy === 'dfs' ? 'Stack' : 'Queue';
-        // ctx.fillText(`${structure} size: ${this.sort.queue.length}`, 550, y);
+        ctx.font = '20px Segoe UI';
+        ctx.fillStyle = 'white';
+        const y = this.canvas.height - 4;
+        ctx.fillText(`Comparisons: ${this.sort.comparisons}`, 4, y);
+        ctx.fillText(`Swaps: ${this.sort.swaps}`, 500, y);
     }
 }
 
@@ -88,12 +87,13 @@ const mainFunction = () => {
     const width = canvas.width;
     const height = canvas.height;
 
-    const data = new Array(20).fill(0).map((_, index) => index + 5);
+    const data = new Array(150).fill(0).map((_, index) => index + 5);
     shuffle(data);
 
     const sorts = [
         new SortingInstance('bubble', data, Insertion),
         new SortingInstance('bubble', data, Bubble),
+        new SortingInstance('bubble', data, Quick),
         // new SortingInstance('bubble', data, Bubble),
         // new SortingInstance('bubble', data, Bubble),
         // new SortingInstance('bubble', data, Bubble),
