@@ -25,6 +25,24 @@ function roughShuffle(array, maxStep) {
     }
 }
 
+function randInt(lo, hi) {
+    return Math.floor(lo + Math.random() * (hi - lo));
+}
+
+function sortChunks(array, minChunk, maxChunk) {
+    let i = 0;
+    while (i + maxChunk < array.length) {
+        const chunkSize = randInt(minChunk, maxChunk);
+
+        quickSort(array, i, i + chunkSize);
+        i += chunkSize;
+    }
+
+    if (i < array.length) {
+        quickSort(array, i, array.length);
+    }
+}
+
 const TEXT_HEIGHT = 28;
 const FRAME_DUR = 5;
 const WIDTH = 1000;
@@ -123,8 +141,9 @@ const mainFunction = () => {
     const height = canvas.height;
 
     const data = new Array(NUM_ITEMS).fill(0).map((_, index) => index + 1);
-    // shuffle(data);
-    roughShuffle(data, 20);
+    shuffle(data);
+    sortChunks(data, 50, 100);
+    // roughShuffle(data, 20);
     // data.reverse();
 
     const sorts = [
