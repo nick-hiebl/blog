@@ -535,3 +535,144 @@ class Comb extends Sort {
         return this.comb;
     }
 }
+
+class Heap extends Sort {
+    setup() {
+        this.size = 0;
+        this.index = -1;
+        this.popping = false;
+
+        this.name = 'Heapsort';
+    }
+
+    step() {
+        if (this.popping) {
+            if (this.size === 0) {
+                this.done = true;
+                return;
+            }
+
+            if (this.index === -1) {
+                this.size--;
+                // Place peak of heap (at LO index) at the end of the array, and place whatever was there at the start
+                this.swaps++;
+                swap(this.data, this.lo, this.lo + this.size);
+                // Set up proper insertion of the new element
+                this.index = this.lo;
+                return;
+            }
+
+            const index = this.index - this.lo;
+            const child1 = (index * 2) + this.lo;
+            const child2 = (index * 2 + 1) + this.lo;
+
+            if (child1 >= this.lo + this.size) {
+                // Inserted as deep as we can, abort
+                this.index = -1;
+                return;
+            }
+
+            if (child2 >= this.lo + this.size) {
+                // May still need to swap with child1
+                this.comparisons++;
+                if (this.data[this.index] < this.data[child1]) {
+                    swap(this.data, this.index, child1);
+                    this.swaps++;
+                }
+                // Must be at the end of the line now either way
+                // If child2 is not in the array, child1 definitely cannot have children
+                this.index = -1;
+                return;
+            }
+
+            // TWO potential children to deal with
+            this.comparisons++;
+            const isChild1Larger = this.data[child1] > this.data[child2];
+
+            // May need to swap with child1 in this case
+            if (isChild1Larger) {
+                this.comparisons++;
+                if (this.data[this.index] < this.data[child1]) {
+                    swap(this.data, this.index, child1);
+                    this.swaps++;
+                    // Continue iterating from this child
+                    this.index = child1;
+                    return;
+                } else {
+                    // Current item must be larger than both, and needs to go no deeper
+                    this.index = -1;
+                    return;
+                }
+            } else {
+                this.comparisons++;
+                if (this.data[this.index] < this.data[child2]) {
+                    swap(this.data, this.index, child2);
+                    this.swaps++;
+                    // Continue iterating from this child
+                    this.index = child2;
+                    return;
+                } else {
+                    // Current item must be larger than both, and needs to go no deeper
+                    this.index = -1;
+                    return;
+                }
+            }
+        }
+
+        if (this.index === -1) {
+            if (this.lo + this.size >= this.hi) {
+                this.popping = true;
+                // this.done = true;
+                return;
+            } else {
+                this.index = this.lo + this.size;
+                this.size += 1;
+                return;
+            }
+        }
+
+        const index = this.index - this.lo;
+        const parentIndex = this.lo + Math.floor(index / 2);
+
+        if (this.index === parentIndex) {
+            // Reached root, done inserting
+            this.index = -1;
+            return;
+        }
+
+        this.comparisons++;
+        if (this.data[this.index] > this.data[parentIndex]) {
+            swap(this.data, this.index, parentIndex);
+            this.swaps++;
+        }
+        this.index = parentIndex;
+    }
+
+    specialColumns() {
+        return [{ color: 'red', index: this.index }];
+    }
+
+    getNoteIndex() {
+        return this.index;
+    }
+}
+
+const isValidHeap = list => {
+    for (let i = 0; i < list.length; i++) {
+        const child1 = i * 2;
+        const child2 = i * 2 + 1;
+
+        if (child1 < list.length) {
+            if (list[i] < list[child1]) {
+                return false;
+            }
+        }
+        if (child2 < list.length) {
+            if (list[i] < list[child2]) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+};
