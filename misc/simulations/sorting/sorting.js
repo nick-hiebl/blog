@@ -36,12 +36,15 @@ function bubbleSort(data) {
 }
 
 class Sort {
-    constructor(data) {
+    constructor(data, lo, hi) {
+        this.lo = lo ?? 0;
+        this.hi = hi ?? data.length;
         this.data = data;
         this.paused = true;
         this.done = false;
         this.doneWalking = false;
-        this.finalWalkIndex = 0;
+
+        this.finalWalkIndex = this.lo;
 
         this.comparisons = 0;
         this.swaps = 0;
@@ -58,7 +61,7 @@ class Sort {
             this.step();
         } else if (!this.doneWalking) {
             this.finalWalkIndex++;
-            if (this.finalWalkIndex >= this.data.length) {
+            if (this.finalWalkIndex >= this.hi) {
                 this.doneWalking = true;
             }
         }
@@ -93,23 +96,23 @@ const swap = (array, i, j) => {
 
 class Selection extends Sort {
     setup() {
-        this.hi = this.data.length;
-        this.walker = 1;
-        this.candidate = 0;
+        this.top = this.hi;
+        this.walker = this.lo + 1;
+        this.candidate = this.lo;
 
         this.name = 'Selection sort';
     }
 
     step() {
-        if (this.walker === this.hi) {
-            this.hi--;
-            swap(this.data, this.candidate, this.hi);
+        if (this.walker === this.top) {
+            this.top--;
+            swap(this.data, this.candidate, this.top);
             this.swaps++;
 
-            this.candidate = 0;
-            this.walker = 1;
+            this.candidate = this.lo;
+            this.walker = this.lo + 1;
 
-            if (this.hi === 0) {
+            if (this.top === this.lo) {
                 this.done = true;
             }
 
@@ -131,7 +134,7 @@ class Selection extends Sort {
         }
 
         return [
-            { color: 'green', index: this.hi - 1 },
+            { color: 'green', index: this.top - 1 },
             { color: 'yellow', index: this.walker },
             { color: 'red', index: this.candidate },
         ];
@@ -144,8 +147,8 @@ class Selection extends Sort {
 
 class Bubble extends Sort {
     setup() {
-        this.sortedAfter = this.data.length;
-        this.innerLoop = 0;
+        this.sortedAfter = this.hi;
+        this.innerLoop = this.lo;
         this.anySwaps = false;
 
         this.name = 'Bubble sort';
@@ -153,18 +156,18 @@ class Bubble extends Sort {
 
     step() {
         if (this.innerLoop >= this.sortedAfter - 1) {
-            this.innerLoop = 0;
+            this.innerLoop = this.lo;
             this.sortedAfter--;
 
             if (!this.anySwaps) {
                 this.done = true;
-                this.sortedAfter = 1;
+                this.sortedAfter = this.lo + 1;
                 return;
             }
 
             this.anySwaps = false;
 
-            if (this.sortedAfter === 1) {
+            if (this.sortedAfter === this.lo + 1) {
                 this.done = true;
                 return;
             }
@@ -203,18 +206,18 @@ class Bubble extends Sort {
 class Insertion extends Sort {
     setup() {
         this.backIndex = -1;
-        this.primaryIndex = 0;
+        this.primaryIndex = this.lo;
 
         this.name = 'Insertion sort';
     }
 
     step() {
-        if (this.primaryIndex >= this.data.length) {
+        if (this.primaryIndex >= this.hi) {
             this.done = true;
         }
 
         if (this.backIndex !== -1) {
-            if (this.backIndex === 0) {
+            if (this.backIndex === this.lo) {
                 this.primaryIndex++;
                 this.backIndex = -1;
                 return;
@@ -266,7 +269,7 @@ class Insertion extends Sort {
 
 class Quick extends Sort {
     setup() {
-        this.stack = [this.createRange(0, this.data.length)];
+        this.stack = [this.createRange(this.lo, this.hi)];
 
         this.name = 'Quicksort';
     }
@@ -339,5 +342,125 @@ class Quick extends Sort {
 
     getNoteIndex() {
         return this.stack[this.stack.length - 1]?.loSection;
+    }
+}
+
+class Merge extends Sort {
+    setup() {
+        this.stack = [this.createRange(this.lo, this.hi)];
+
+        this.name = 'Mergesort';
+    }
+
+    createRange(lo, hi) {
+        if (hi - lo < 8) {
+            return {
+                lo,
+                hi,
+                sort: new Insertion(this.data, lo, hi),
+            };
+        }
+        return {
+            lo,
+            hi,
+            buffer: [],
+            break: -1,
+            left: -1,
+            right: -1,
+            walk: lo,
+        };
+    }
+
+    step() {
+        if (!this.stack[this.stack.length - 1]) {
+            this.done = true;
+            return;
+        }
+
+        const current = this.stack[this.stack.length - 1];
+
+        if (current.sort) {
+            if (current.sort.done) {
+                this.stack.pop();
+                this.comparisons += current.sort.comparisons;
+                this.swaps += current.sort.swaps;
+                return;
+            } else {
+                current.sort.step();
+                return;
+            }
+        }
+
+        if (current.lo + 1 >= current.hi) {
+            this.stack.pop();
+            return;
+        }
+
+        if (current.break === -1) {
+            const mid = Math.floor((current.lo + current.hi) / 2);
+            current.break = mid;
+            current.left = current.lo;
+            current.right = mid;
+
+            this.stack.push(this.createRange(mid, current.hi));
+            this.stack.push(this.createRange(current.lo, mid));
+        } else {
+            while (current.left < current.break || current.right < current.hi) {
+                if (current.left === current.break) {
+                    current.buffer.push(this.data[current.right]);
+                    current.right++;
+                    return;
+                } else if (current.right === current.hi) {
+                    current.buffer.push(this.data[current.left]);
+                    current.left++;
+                    return;
+                }
+
+                this.comparisons++;
+                if (this.data[current.left] < this.data[current.right]) {
+                    current.buffer.push(this.data[current.left]);
+                    current.left++;
+                } else {
+                    current.buffer.push(this.data[current.right]);
+                    current.right++;
+                }
+            }
+            if (current.left === current.break && current.right === current.hi) {
+                // Done merging into buffer
+                if (current.walk < current.hi) {
+                    // Copy back from buffer
+                    this.data[current.walk] = current.buffer[current.walk - current.lo];
+                    current.walk++;
+                    return;
+                } else {
+                    // Done copying back from buffer
+                    this.stack.pop();
+                    return;
+                }
+            }
+        }
+    }
+
+    specialColumns() {
+        const current = this.stack[this.stack.length - 1];
+
+        if (!current) {
+            return [];
+        }
+
+        if (current.walk !== -1) {
+            return [{ color: 'red', index: current.walk }];
+        } else if (current.left !== -1 || current.right !== -1) {
+            return [
+                { color: 'red', index: current.left },
+                { color: 'red', index: current.right },
+            ];
+        }
+
+        return [];
+    }
+
+    getNoteIndex() {
+        return this.specialColumns()[0].index;
     }
 }

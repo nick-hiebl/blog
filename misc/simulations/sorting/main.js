@@ -46,8 +46,8 @@ function sortChunks(array, minChunk, maxChunk) {
 const TEXT_HEIGHT = 28;
 const FRAME_DUR = 5;
 const WIDTH = 1000;
-const HEIGHT = 400;
-const NUM_ITEMS = 500;
+const HEIGHT = 300;
+const NUM_ITEMS = 1000;
 
 class SortingInstance {
     constructor(sortName, data, Sort) {
@@ -101,15 +101,15 @@ class SortingInstance {
             //     { all: 5 },
             // );
             /* Draw as perfect rectangles */
-            ctx.rect(
-                i * sliceWidth,
-                (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight,
-                sliceWidth - inset,
-                this.data[i] * unitHeight,
-            );
+            // ctx.rect(
+            //     i * sliceWidth,
+            //     (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight,
+            //     sliceWidth - inset,
+            //     this.data[i] * unitHeight,
+            // );
             /* Draw as circles */
-            // ctx.moveTo(x, y);
-            // ctx.ellipse(x, y, sliceWidth / 2, sliceWidth / 2, 0, 0, 2 * Math.PI);
+            ctx.moveTo(x, y);
+            ctx.ellipse(x, y, sliceWidth, sliceWidth, 0, 0, 2 * Math.PI);
         };
 
         ctx.fillStyle = 'white';
@@ -142,15 +142,16 @@ const mainFunction = () => {
 
     const data = new Array(NUM_ITEMS).fill(0).map((_, index) => index + 1);
     shuffle(data);
-    sortChunks(data, 50, 100);
-    // roughShuffle(data, 20);
     // data.reverse();
+    // roughShuffle(data, 20);
+    // sortChunks(data, 10, 20);
 
     const sorts = [
-        // new SortingInstance('bubble', data, Selection),
-        // new SortingInstance('bubble', data, Bubble),
+        new SortingInstance('bubble', data, Selection),
+        new SortingInstance('bubble', data, Bubble),
         new SortingInstance('bubble', data, Insertion),
         new SortingInstance('bubble', data, Quick),
+        new SortingInstance('bubble', data, Merge),
     ];
 
     window.sorts = sorts;
