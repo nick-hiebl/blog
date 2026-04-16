@@ -676,3 +676,47 @@ const isValidHeap = list => {
 
     return true;
 };
+
+class OddEven extends Sort {
+    setup() {
+        this.index = this.lo;
+        this.anySwaps = false;
+        this.noSwapRuns = 0;
+
+        this.name = 'Odd-even sort';
+    }
+
+    step() {
+        if (this.index + 1 >= this.hi) {
+            const currentParity = (this.index - this.lo) % 2;
+            const nextParity = 1 - currentParity;
+            this.index = this.lo + nextParity;
+            if (!this.anySwaps) {
+                this.noSwapRuns++;
+                if (this.noSwapRuns >= 2) {
+                    this.done = true;
+                }
+            } else {
+                this.anySwaps = false;
+            }
+            return;
+        }
+
+        this.comparisons++;
+        if (this.data[this.index] > this.data[this.index + 1]) {
+            swap(this.data, this.index, this.index + 1);
+            this.anySwaps = true;
+            this.swaps++;
+        }
+
+        this.index += 2;
+    }
+
+    specialColumns() {
+        return [{ color: 'red', index: this.index }];
+    }
+
+    getNoteIndex() {
+        return this.index;
+    }
+}

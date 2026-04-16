@@ -44,10 +44,10 @@ function sortChunks(array, minChunk, maxChunk) {
 }
 
 const TEXT_HEIGHT = 28;
-const FRAME_DUR = 5;
+const FRAME_DUR = 50;
 const WIDTH = 1000;
 const HEIGHT = 320;
-const NUM_ITEMS = 500;
+const NUM_ITEMS = 20;
 
 class SortingInstance {
     constructor(sortName, data, Sort) {
@@ -149,13 +149,14 @@ const mainFunction = () => {
     // sortChunks(data, 10, 20);
 
     const sorts = [
+        new SortingInstance('bubble', data, Bubble),
+        new SortingInstance('bubble', data, OddEven),
         // new SortingInstance('bubble', data, Selection),
-        // new SortingInstance('bubble', data, Bubble),
-        new SortingInstance('bubble', data, Comb),
-        new SortingInstance('bubble', data, Insertion),
-        new SortingInstance('bubble', data, Quick),
-        new SortingInstance('bubble', data, Merge),
-        new SortingInstance('bubble', data, Heap),
+        // new SortingInstance('bubble', data, Comb),
+        // new SortingInstance('bubble', data, Insertion),
+        // new SortingInstance('bubble', data, Quick),
+        // new SortingInstance('bubble', data, Merge),
+        // new SortingInstance('bubble', data, Heap),
     ];
 
     window.sorts = sorts;
