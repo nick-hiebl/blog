@@ -101,15 +101,15 @@ class SortingInstance {
             //     { all: 5 },
             // );
             /* Draw as perfect rectangles */
-            // ctx.rect(
-            //     i * sliceWidth,
-            //     (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight,
-            //     sliceWidth - inset,
-            //     this.data[i] * unitHeight,
-            // );
+            ctx.rect(
+                i * sliceWidth,
+                (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight,
+                sliceWidth - inset,
+                this.data[i] * unitHeight,
+            );
             /* Draw as circles */
-            ctx.moveTo(x, y);
-            ctx.ellipse(x, y, sliceWidth, sliceWidth, 0, 0, 2 * Math.PI);
+            // ctx.moveTo(x, y);
+            // ctx.ellipse(x, y, sliceWidth * 2, sliceWidth * 2, 0, 0, 2 * Math.PI);
         };
 
         ctx.fillStyle = 'white';
@@ -126,6 +126,8 @@ class SortingInstance {
             ctx.fill();
         }
 
+        this.sort.postDraw?.(this.canvas, sliceWidth, unitHeight, this.min, this.max);
+
         ctx.font = '20px Segoe UI';
         ctx.fillStyle = 'white';
         const y = this.canvas.height - 4;
@@ -141,9 +143,9 @@ const mainFunction = () => {
     const height = canvas.height;
 
     const data = new Array(NUM_ITEMS).fill(0).map((_, index) => index + 1);
-    shuffle(data);
+    // shuffle(data);
     // data.reverse();
-    // roughShuffle(data, 20);
+    roughShuffle(data, 10);
     // sortChunks(data, 10, 20);
 
     const sorts = [

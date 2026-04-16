@@ -343,6 +343,27 @@ class Quick extends Sort {
     getNoteIndex() {
         return this.stack[this.stack.length - 1]?.loSection;
     }
+
+    postDraw(canvas, sliceWidth, unitHeight, min, max) {
+        const current = this.stack[this.stack.length - 1];
+
+        if (!current) return;
+
+        const ctx = canvas.ctx;
+        ctx.strokeStyle = 'pink';
+
+        ctx.beginPath();
+        ctx.moveTo(sliceWidth * current.loSection, canvas.height - TEXT_HEIGHT - min * unitHeight);
+        ctx.lineTo(sliceWidth * current.loSection, canvas.height - TEXT_HEIGHT - max * unitHeight);
+
+        ctx.moveTo(sliceWidth * current.hiSection, canvas.height - TEXT_HEIGHT - min * unitHeight);
+        ctx.lineTo(sliceWidth * current.hiSection, canvas.height - TEXT_HEIGHT - max * unitHeight);
+
+        ctx.moveTo(sliceWidth * current.loSection, canvas.height - TEXT_HEIGHT - this.data[current.pivot] * unitHeight);
+        ctx.lineTo(sliceWidth * current.hiSection, canvas.height - TEXT_HEIGHT - this.data[current.pivot] * unitHeight);
+
+        ctx.stroke();
+    }
 }
 
 class Merge extends Sort {
