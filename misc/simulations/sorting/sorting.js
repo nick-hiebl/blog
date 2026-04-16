@@ -193,8 +193,8 @@ class Bubble extends Sort {
         }
 
         return [
-            { color: 'green', index: this.sortedAfter },
-            { color: 'gold', index: this.innerLoop },
+            // { color: 'green', index: this.sortedAfter },
+            { color: 'red', index: this.innerLoop },
         ];
     }
 
@@ -271,10 +271,36 @@ class Quick extends Sort {
     setup() {
         this.stack = [this.createRange(this.lo, this.hi)];
 
+        this.bestOf3 = false;
+
         this.name = 'Quicksort';
     }
 
     createRange(lo, hi) {
+        if (this.bestOf3 && hi - lo > 3) {
+            const c1 = this.data[lo];
+            const c2 = this.data[lo + 1];
+            const c3 = this.data[lo + 2];
+
+            this.comparisons++;
+            const oneBeforeTwo = c1 <= c2;
+            this.comparisons++;
+            const oneBeforeThree = c1 <= c3;
+
+            if (oneBeforeTwo !== oneBeforeThree) {
+                // Nothing to do
+            } else {
+                this.comparisons++;
+                const twoBeforeThree = c2 <= c3;
+                if (twoBeforeThree !== oneBeforeTwo) {
+                    this.swaps++;
+                    swap(this.data, lo, lo + 2);
+                } else {
+                    this.swaps++;
+                    swap(this.data, lo, lo + 1);
+                }
+            }
+        }
         return {
             lo,
             hi,
@@ -341,29 +367,30 @@ class Quick extends Sort {
     }
 
     getNoteIndex() {
-        return this.stack[this.stack.length - 1]?.loSection;
+        const last = this.stack[this.stack.length - 1];
+        return last?.sort?.getNoteIndex?.() ?? last?.loSection;
     }
 
-    postDraw(canvas, sliceWidth, unitHeight, min, max) {
-        const current = this.stack[this.stack.length - 1];
+    // postDraw(canvas, sliceWidth, unitHeight, min, max) {
+    //     const current = this.stack[this.stack.length - 1];
 
-        if (!current) return;
+    //     if (!current) return;
 
-        const ctx = canvas.ctx;
-        ctx.strokeStyle = 'pink';
+    //     const ctx = canvas.ctx;
+    //     ctx.strokeStyle = 'pink';
 
-        ctx.beginPath();
-        ctx.moveTo(sliceWidth * current.loSection, canvas.height - TEXT_HEIGHT - min * unitHeight);
-        ctx.lineTo(sliceWidth * current.loSection, canvas.height - TEXT_HEIGHT - max * unitHeight);
+    //     ctx.beginPath();
+    //     ctx.moveTo(sliceWidth * current.loSection, canvas.height - TEXT_HEIGHT - min * unitHeight);
+    //     ctx.lineTo(sliceWidth * current.loSection, canvas.height - TEXT_HEIGHT - max * unitHeight);
 
-        ctx.moveTo(sliceWidth * current.hiSection, canvas.height - TEXT_HEIGHT - min * unitHeight);
-        ctx.lineTo(sliceWidth * current.hiSection, canvas.height - TEXT_HEIGHT - max * unitHeight);
+    //     ctx.moveTo(sliceWidth * current.hiSection, canvas.height - TEXT_HEIGHT - min * unitHeight);
+    //     ctx.lineTo(sliceWidth * current.hiSection, canvas.height - TEXT_HEIGHT - max * unitHeight);
 
-        ctx.moveTo(sliceWidth * current.loSection, canvas.height - TEXT_HEIGHT - this.data[current.pivot] * unitHeight);
-        ctx.lineTo(sliceWidth * current.hiSection, canvas.height - TEXT_HEIGHT - this.data[current.pivot] * unitHeight);
+    //     ctx.moveTo(sliceWidth * current.loSection, canvas.height - TEXT_HEIGHT - this.data[current.pivot] * unitHeight);
+    //     ctx.lineTo(sliceWidth * current.hiSection, canvas.height - TEXT_HEIGHT - this.data[current.pivot] * unitHeight);
 
-        ctx.stroke();
-    }
+    //     ctx.stroke();
+    // }
 }
 
 class Merge extends Sort {
@@ -374,7 +401,7 @@ class Merge extends Sort {
     }
 
     createRange(lo, hi) {
-        if (hi - lo < 8) {
+        if (hi - lo <= 8) {
             return {
                 lo,
                 hi,
@@ -451,6 +478,7 @@ class Merge extends Sort {
                 if (current.walk < current.hi) {
                     // Copy back from buffer
                     this.data[current.walk] = current.buffer[current.walk - current.lo];
+                    this.swaps++;
                     current.walk++;
                     return;
                 } else {
@@ -482,7 +510,7 @@ class Merge extends Sort {
     }
 
     getNoteIndex() {
-        return this.specialColumns()[0].index;
+        return this.specialColumns()[0]?.index;
     }
 }
 

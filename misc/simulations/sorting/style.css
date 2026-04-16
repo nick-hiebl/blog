@@ -43,7 +43,7 @@ button {
 
 #control-panel {
     position: absolute;
-    left: 1100px;
+    left: 2000px;
     top: 0px;
     display: flex;
     flex-direction: column;
@@ -51,10 +51,10 @@ button {
 
 #canvas-box {
     position: absolute;
-    top: 209px;
-    width: 1080px;
+    top: 9px;
+    width: 1920px;
     left: 9px;
-    height: 1520px;
+    height: 1080px;
     display: flex;
     flex-direction: column;
     align-items: center;

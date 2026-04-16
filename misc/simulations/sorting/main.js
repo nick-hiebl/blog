@@ -44,10 +44,10 @@ function sortChunks(array, minChunk, maxChunk) {
 }
 
 const TEXT_HEIGHT = 28;
-const FRAME_DUR = 50;
-const WIDTH = 1000;
-const HEIGHT = 320;
-const NUM_ITEMS = 50;
+const FRAME_DUR = 5;
+const WIDTH = 1800;
+const HEIGHT = 400;
+const NUM_ITEMS = 1800;
 
 class SortingInstance {
     constructor(sortName, data, Sort) {
@@ -102,8 +102,8 @@ class SortingInstance {
             // );
             /* Draw as perfect rectangles */
             ctx.rect(
-                i * sliceWidth,
-                (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight,
+                x,
+                y,
                 sliceWidth - inset,
                 this.data[i] * unitHeight,
             );
@@ -132,8 +132,8 @@ class SortingInstance {
         ctx.fillStyle = 'white';
         const y = this.canvas.height - 4;
         ctx.fillText(this.sort.name, 10, y);
-        ctx.fillText(`Comparisons: ${this.sort.comparisons}`, 440, y);
-        ctx.fillText(`Swaps: ${this.sort.swaps}`, 880, y);
+        ctx.fillText(`Comparisons: ${this.sort.comparisons}`, 1460, y);
+        ctx.fillText(`Swaps: ${this.sort.swaps}`, 1680, y);
     }
 }
 
@@ -143,22 +143,25 @@ const mainFunction = () => {
     const height = canvas.height;
 
     const data = new Array(NUM_ITEMS).fill(0).map((_, index) => index + 1);
-    // shuffle(data);
+    shuffle(data);
     // data.reverse();
-    roughShuffle(data, 10);
+    // roughShuffle(data, 10);
     // sortChunks(data, 10, 20);
 
     const sorts = [
-        new SortingInstance('bubble', data, Bubble),
+        // new SortingInstance('bubble', data, Bubble),
+        // new SortingInstance('bubble', data, Cocktail),
         // new SortingInstance('bubble', data, OddEven),
-        new SortingInstance('bubble', data, Cocktail),
+        // new SortingInstance('bubble', data, Comb),
         // new SortingInstance('bubble', data, Selection),
-        new SortingInstance('bubble', data, Comb),
-        new SortingInstance('bubble', data, Insertion),
-        // new SortingInstance('bubble', data, Quick),
-        // new SortingInstance('bubble', data, Merge),
+        // new SortingInstance('bubble', data, Insertion),
+        new SortingInstance('bubble', data, Merge),
+        new SortingInstance('bubble', data, Quick),
         // new SortingInstance('bubble', data, Heap),
     ];
+
+    // sorts[1].sort.name = 'Best-of-3 Quicksort';
+    // sorts[1].sort.bestOf3 = true;
 
     window.sorts = sorts;
 
