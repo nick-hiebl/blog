@@ -485,3 +485,53 @@ class Merge extends Sort {
         return this.specialColumns()[0].index;
     }
 }
+
+class Comb extends Sort {
+    setup() {
+        this.stepAmount = Math.floor((this.hi - this.lo) / 1.3);
+        this.comb = this.lo;
+        this.anySwaps = false;
+
+        this.name = 'Combsort';
+    }
+
+    step() {
+        if (this.comb + this.stepAmount >= this.hi) {
+            if (this.stepAmount === 1) {
+                if (!this.anySwaps) {
+                    this.done = true;
+                    return;
+                } else {
+                    this.anySwaps = false;
+                    this.comb = this.lo;
+                    return;
+                }
+            } else {
+                this.anySwaps = false;
+                this.comb = this.lo;
+                this.stepAmount = Math.floor(this.stepAmount / 1.3);
+                return;
+            }
+        }
+
+        this.comparisons++;
+        if (this.data[this.comb] > this.data[this.comb + this.stepAmount]) {
+            this.anySwaps = true;
+            swap(this.data, this.comb, this.comb + this.stepAmount);
+            this.swaps++;
+        }
+
+        this.comb++;
+    }
+
+    specialColumns() {
+        return [
+            { color: 'red', index: this.comb },
+            { color: 'red', index: this.comb + this.stepAmount },
+        ];
+    }
+
+    getNoteIndex() {
+        return this.comb;
+    }
+}

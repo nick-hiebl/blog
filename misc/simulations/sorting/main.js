@@ -47,7 +47,7 @@ const TEXT_HEIGHT = 28;
 const FRAME_DUR = 5;
 const WIDTH = 1000;
 const HEIGHT = 300;
-const NUM_ITEMS = 1000;
+const NUM_ITEMS = 200;
 
 class SortingInstance {
     constructor(sortName, data, Sort) {
@@ -143,17 +143,18 @@ const mainFunction = () => {
     const height = canvas.height;
 
     const data = new Array(NUM_ITEMS).fill(0).map((_, index) => index + 1);
-    // shuffle(data);
+    shuffle(data);
     // data.reverse();
-    roughShuffle(data, 10);
+    // roughShuffle(data, 10);
     // sortChunks(data, 10, 20);
 
     const sorts = [
         new SortingInstance('bubble', data, Selection),
         new SortingInstance('bubble', data, Bubble),
-        new SortingInstance('bubble', data, Insertion),
-        new SortingInstance('bubble', data, Quick),
-        new SortingInstance('bubble', data, Merge),
+        new SortingInstance('bubble', data, Comb),
+        // new SortingInstance('bubble', data, Insertion),
+        // new SortingInstance('bubble', data, Quick),
+        // new SortingInstance('bubble', data, Merge),
     ];
 
     window.sorts = sorts;
