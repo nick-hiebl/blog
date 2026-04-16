@@ -649,7 +649,10 @@ class Heap extends Sort {
     }
 
     specialColumns() {
-        return [{ color: 'red', index: this.index }];
+        return [
+            { color: 'red', index: this.index },
+            { color: 'yellow', index: this.lo + this.size },
+        ];
     }
 
     getNoteIndex() {
@@ -698,6 +701,7 @@ class OddEven extends Sort {
                 }
             } else {
                 this.anySwaps = false;
+                this.noSwapRuns = 0;
             }
             return;
         }
@@ -718,5 +722,81 @@ class OddEven extends Sort {
 
     getNoteIndex() {
         return this.index;
+    }
+}
+
+class Cocktail extends Sort {
+    setup() {
+        this.left = this.lo;
+        this.right = this.hi;
+
+        this.index = this.left;
+        this.direction = 1;
+
+        this.anySwaps = false;
+        this.noSwapRuns = 0;
+
+        this.name = 'Cocktail sort';
+    }
+
+    step() {
+        if (this.left + 1 >= this.right) {
+            this.done = true;
+            return;
+        }
+
+        if (this.direction === 1) {
+            if (this.index + 1 >= this.right) {
+                this.direction = -1;
+                this.index--;
+                this.right--;
+                return;
+            }
+
+            this.comparisons++;
+            if (this.data[this.index] > this.data[this.index + 1]) {
+                swap(this.data, this.index, this.index + 1);
+                this.swaps++;
+                this.anySwaps = true;
+            }
+            this.index++;
+            return;
+        } else {
+            if (this.index - 1 < this.left) {
+                this.direction = 1;
+                this.index++;
+                this.left++;
+
+                if (!this.anySwaps) {
+                    this.noSwapRuns += 1;
+                    if (this.noSwapRuns >= 2) {
+                        this.done = true;
+                        return;
+                    }
+                } else {
+                    this.noSwapRuns = 0;
+                    this.anySwaps = false;
+                }
+
+                return;
+            }
+
+            this.comparisons++;
+            if (this.data[this.index] < this.data[this.index - 1]) {
+                swap(this.data, this.index, this.index - 1);
+                this.swaps++;
+                this.anySwaps = true;
+            }
+            this.index--;
+            return;
+        }
+    }
+
+    specialColumns() {
+        return [{ color: 'red', index: this.index }];
+    }
+
+    getNoteIndex() {
+        return this.index + this.direction;
     }
 }
