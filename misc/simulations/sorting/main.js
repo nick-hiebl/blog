@@ -44,10 +44,10 @@ function sortChunks(array, minChunk, maxChunk) {
 }
 
 const TEXT_HEIGHT = 28;
-const FRAME_DUR = 5;
-const WIDTH = 1800;
-const HEIGHT = 400;
-const NUM_ITEMS = 1800;
+const FRAME_DUR = 250;
+const WIDTH = 1200;
+const HEIGHT = 700;
+const NUM_ITEMS = 12;
 
 class SortingInstance {
     constructor(sortName, data, Sort) {
@@ -84,6 +84,11 @@ class SortingInstance {
         ctx.fillStyle = 'black';
 
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        if (this.sort.draw) {
+            this.sort.draw(this.canvas, ctx, this.canvas.width, this.canvas.height - TEXT_HEIGHT);
+            return;
+        }
 
         const sliceWidth = this.canvas.width / this.data.length;
         const unitHeight = (this.canvas.height - TEXT_HEIGHT) / this.max;
@@ -155,9 +160,10 @@ const mainFunction = () => {
         // new SortingInstance('bubble', data, Comb),
         // new SortingInstance('bubble', data, Selection),
         // new SortingInstance('bubble', data, Insertion),
-        new SortingInstance('bubble', data, Merge),
-        new SortingInstance('bubble', data, Quick),
+        // new SortingInstance('bubble', data, Merge),
+        // new SortingInstance('bubble', data, Quick),
         // new SortingInstance('bubble', data, Heap),
+        new SortingInstance('bubble', data, Wizard),
     ];
 
     // sorts[1].sort.name = 'Best-of-3 Quicksort';
