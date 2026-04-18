@@ -9,6 +9,8 @@ class Wizard extends Sort {
         this.hex = null;
         this.spirits = [];
 
+        this.thunder = new Channel('triangle');
+
         this.name = 'Wizard sort';
     }
 
@@ -28,7 +30,6 @@ class Wizard extends Sort {
     }
 
     arrangeSwaps(valueAndTargets) {
-        console.log('Received proposal', valueAndTargets);
         const map = new Map();
         const allValues = new Set();
         for (const { value, targetIndex } of valueAndTargets) {
@@ -49,18 +50,29 @@ class Wizard extends Sort {
             allValues.delete(value);
         }
 
-        console.log('Put things into desired spots', map);
-
         const leftoverValues = Array.from(allValues);
         shuffle(leftoverValues);
         for (let i = 0; i < leftoverIndices.length; i++) {
             map.set(leftoverIndices[i], leftoverValues[i]);
         }
 
-        console.log('Constructed solution', map);
-
         for (const key of map.keys()) {
             this.data[key] = map.get(key);
+        }
+    }
+
+    playThunder() {
+        this.thunder.oscillator.frequency.setValueAtTime(60, audioContext.currentTime);
+        this.thunder.oscillator.frequency.exponentialRampToValueAtTime(30, audioContext.currentTime + 2);
+
+        this.thunder.volume.gain.setValueAtTime(0, audioContext.currentTime);
+        this.thunder.volume.gain.linearRampToValueAtTime(0.1, audioContext.currentTime);
+        this.thunder.volume.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 3);
+
+        if (!this.thunder.started) {
+            console.log('starting');
+            this.thunder.oscillator.start();
+            this.thunder.started = true;
         }
     }
 
@@ -94,6 +106,7 @@ class Wizard extends Sort {
             indices: spellList,
             startTime: performance.now(),
         };
+        this.playThunder();
     }
 
     createHex() {
@@ -176,7 +189,7 @@ class Wizard extends Sort {
     updateSpirits(areaWidth, areaHeight) {
         const SPAWN_BUFFER = 100;
         const FLOAT_BUFFER = 50;
-        const MAX_SPEED = 2.5;
+        const MAX_SPEED = 1;
         const VEL_STEP = 0.1;
         const DEATH_TIME = 1000;
 
@@ -187,7 +200,6 @@ class Wizard extends Sort {
         for (const spirit of this.spirits) {
             if (now - spirit.deathTime > DEATH_TIME) {
                 spirit.dead = true;
-                console.log('Spirit died');
             }
             if (spirit.x === -1) {
                 spirit.x = randInt(SPAWN_BUFFER, areaWidth - SPAWN_BUFFER);
@@ -270,9 +282,9 @@ class Wizard extends Sort {
             ctx.fillStyle = '#50ebb4';
             ctx.beginPath();
             for (const i of this.hex.spots) {
-                if (this.doneSet.has(i)) {
-                    continue;
-                }
+                // if (this.doneSet.has(i)) {
+                //     continue;
+                // }
                 const x = i * sliceWidth;
                 const barHeight = this.data[i] * unitHeight;
                 const y = areaHeight - barHeight;
@@ -286,7 +298,7 @@ class Wizard extends Sort {
         ctx.fillStyle = 'aqua';
         ctx.beginPath();
         for (const i of this.doneSet) {
-            if (this.spell?.indices?.has?.(i)) {
+            if (this.spell?.indices?.has?.(i) || this.hex?.spots?.includes?.(i)) {
                 continue;
             }
             const x = i * sliceWidth;
@@ -305,9 +317,15 @@ class Wizard extends Sort {
             ctx.beginPath();
 
             for (const i of Array.from(this.spell.indices)) {
+                if (this.hex?.spots?.includes?.(i)) {
+                    continue;
+                }
                 const x = i * sliceWidth;
                 const fullBarHeight = this.data[i] * unitHeight;
-                const barHeight = fullBarHeight * spellFraction;
+                const barHeight = Math.min(
+                    fullBarHeight,
+                    this.max * unitHeight * spellFraction,
+                );
                 const y = areaHeight - barHeight;
 
                 canvas.drawRoundedRectangle(x, y, sliceWidth - inset, barHeight, { top: 8 });
