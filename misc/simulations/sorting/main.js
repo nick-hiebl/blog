@@ -47,7 +47,7 @@ const TEXT_HEIGHT = 28;
 const FRAME_DUR = 250;
 const WIDTH = 1200;
 const HEIGHT = 700;
-const NUM_ITEMS = 12;
+const NUM_ITEMS = 60;
 
 class SortingInstance {
     constructor(sortName, data, Sort) {

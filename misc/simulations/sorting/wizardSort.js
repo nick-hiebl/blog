@@ -112,8 +112,8 @@ class Wizard extends Sort {
     createHex() {
         const availableIndices = new Array(this.hi - this.lo)
             .fill(0)
-            .map((_, index) => this.lo + index)
-            .filter(v => !this.doneSet.has(v));
+            .map((_, index) => this.lo + index);
+            // .filter(v => !this.doneSet.has(v));
 
         const randomSpot = availableIndices.chooseRandom();
         if (randomSpot === undefined) {
@@ -218,7 +218,7 @@ class Wizard extends Sort {
             if (spirit.y < FLOAT_BUFFER) {
                 spirit.vy = Math.min(spirit.vy + VEL_STEP, MAX_SPEED);
             } else if (spirit.y > 2 * SPAWN_BUFFER) {
-                spirit.vy = Math.min(spirit.vy - VEL_STEP, -MAX_SPEED);
+                spirit.vy = Math.max(spirit.vy - VEL_STEP, -MAX_SPEED);
             } else {
                 spirit.vy += randInt(-10, 11) / 10 * VEL_STEP;
             }
