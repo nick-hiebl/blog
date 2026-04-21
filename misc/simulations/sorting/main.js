@@ -44,10 +44,13 @@ function sortChunks(array, minChunk, maxChunk) {
 }
 
 const TEXT_HEIGHT = 28;
-const FRAME_DUR = 250;
+const FRAME_DUR = 50;
 const WIDTH = 1200;
-const HEIGHT = 700;
-const NUM_ITEMS = 60;
+const HEIGHT = 300;
+const NUM_ITEMS = 50;
+
+const INSET = 2;
+const ROUNDED_CORNER = 2;
 
 class SortingInstance {
     constructor(sortName, data, Sort) {
@@ -78,67 +81,78 @@ class SortingInstance {
         }
     }
 
-    draw() {
-        const ctx = this.canvas.ctx;
+    draw(givenCanvas, givenCtx) {
+        const ctx = givenCtx ?? this.canvas.ctx;
+        const canvas = givenCanvas ?? this.canvas;
 
         ctx.fillStyle = 'black';
 
+        // Still fill only with my dimensions
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        if (this.sort.draw) {
-            this.sort.draw(this.canvas, ctx, this.canvas.width, this.canvas.height - TEXT_HEIGHT);
-            return;
-        }
+        if (this.sort.draw && !this.sort.done) {
+            this.sort.draw(givenCanvas, ctx, this.canvas.width, this.canvas.height - TEXT_HEIGHT);
+        } else {
+            const sliceWidth = this.canvas.width / this.data.length;
+            const unitHeight = (this.canvas.height - TEXT_HEIGHT) / this.max;
+            const inset = INSET;
 
-        const sliceWidth = this.canvas.width / this.data.length;
-        const unitHeight = (this.canvas.height - TEXT_HEIGHT) / this.max;
-        const inset = 0;
+            const fillBar = i => {
+                const x = i * sliceWidth;
+                const barHeight = this.data[i] * unitHeight;
+                const y = (this.canvas.height - TEXT_HEIGHT) - barHeight;
+                /* Draw as rounded rectangles */
+                canvas.drawRoundedRectangle(
+                    x,
+                    y,
+                    sliceWidth - inset,
+                    barHeight,
+                    { top: ROUNDED_CORNER },
+                );
+                /* Draw as perfect rectangles */
+                // ctx.rect(
+                //     x,
+                //     y,
+                //     sliceWidth - inset,
+                //     barHeight,
+                // );
+                /* Draw as circles */
+                // ctx.moveTo(x, y);
+                // ctx.ellipse(x, y, sliceWidth * 2, sliceWidth * 2, 0, 0, 2 * Math.PI);
+            };
 
-        const fillBar = i => {
-            const x = i * sliceWidth;
-            const y = (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight;
-            /* Draw as rounded rectangles */
-            // this.canvas.drawRoundedRectangle(
-            //     i * sliceWidth + inset,
-            //     (this.canvas.height - TEXT_HEIGHT) - this.data[i] * unitHeight + inset,
-            //     sliceWidth - 2 * inset,
-            //     this.data[i] * unitHeight - 2 * inset,
-            //     { all: 5 },
-            // );
-            /* Draw as perfect rectangles */
-            ctx.rect(
-                x,
-                y,
-                sliceWidth - inset,
-                this.data[i] * unitHeight,
-            );
-            /* Draw as circles */
-            // ctx.moveTo(x, y);
-            // ctx.ellipse(x, y, sliceWidth * 2, sliceWidth * 2, 0, 0, 2 * Math.PI);
-        };
-
-        ctx.fillStyle = 'white';
-        ctx.beginPath();
-        for (let i = 0; i < this.data.length; i++) {
-            fillBar(i);
-        }
-        ctx.fill();
-
-        for (const { color, index } of this.sort.getColumns()) {
-            ctx.fillStyle = color;
+            ctx.fillStyle = 'white';
             ctx.beginPath();
-            fillBar(index);
+            for (let i = 0; i < this.data.length; i++) {
+                fillBar(i);
+            }
             ctx.fill();
+
+            for (const { color, index } of this.sort.getColumns()) {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                fillBar(index);
+                ctx.fill();
+            }
+
+            this.sort.postDraw?.(this.canvas, sliceWidth, unitHeight, this.min, this.max);
         }
 
-        this.sort.postDraw?.(this.canvas, sliceWidth, unitHeight, this.min, this.max);
 
         ctx.font = '20px Segoe UI';
         ctx.fillStyle = 'white';
         const y = this.canvas.height - 4;
         ctx.fillText(this.sort.name, 10, y);
-        ctx.fillText(`Comparisons: ${this.sort.comparisons}`, 1460, y);
-        ctx.fillText(`Swaps: ${this.sort.swaps}`, 1680, y);
+        ctx.fillText(`Comparisons: ${this.sort.comparisons}`, WIDTH - 340, y);
+        ctx.fillText(`Swaps: ${this.sort.swaps}`, WIDTH - 120, y);
+
+        let x = WIDTH - 340;
+        if (this.sort.customData) {
+            for (const { title, count, width } of this.sort.customData) {
+                x -= width;
+                ctx.fillText(`${title}: ${count()}`, x, y);
+            }
+        }
     }
 }
 
@@ -161,9 +175,9 @@ const mainFunction = () => {
         // new SortingInstance('bubble', data, Selection),
         // new SortingInstance('bubble', data, Insertion),
         // new SortingInstance('bubble', data, Merge),
-        // new SortingInstance('bubble', data, Quick),
-        // new SortingInstance('bubble', data, Heap),
         new SortingInstance('bubble', data, Wizard),
+        new SortingInstance('bubble', data, Quick),
+        new SortingInstance('bubble', data, Heap),
     ];
 
     // sorts[1].sort.name = 'Best-of-3 Quicksort';
@@ -188,9 +202,18 @@ const mainFunction = () => {
         //     return best;
         // }, Infinity);
 
+        const box = canvas.canvas.getBoundingClientRect();
+        const myLeft = box.x;
+        const myTop = box.y;
+
         for (let i = 0; i < sorts.length; i++) {
             const pf = sorts[i];
-            pf.draw();
+            const pfBox = pf.canvas.canvas.getBoundingClientRect();
+            ctx.save();
+            ctx.translate(pfBox.x - myLeft, pfBox.y - myTop);
+            pf.draw(canvas, ctx);
+
+            ctx.restore();
 
             // if (pf.sort.done) {
             //     if (pf.sort.trail.length === bestScore) {

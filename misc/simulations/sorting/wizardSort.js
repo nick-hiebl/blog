@@ -1,4 +1,7 @@
-const SPELL_DURATION = 2000;
+const SPELL_DURATION = 500;
+
+const DEATH_TIME = 1000;
+const SPIRIT_RADIUS = 25;
 
 class Wizard extends Sort {
     setup() {
@@ -10,6 +13,16 @@ class Wizard extends Sort {
         this.spirits = [];
 
         this.thunder = new Channel('triangle');
+
+        this.customData = [
+            { title: 'Spells', count: () => this.spellCount, width: 120 },
+            { title: 'Sigils spent', count: () => this.spiritCount, width: 170 },
+            { title: 'Hexes', count: () => this.hexCount, width: 120 },
+        ];
+
+        this.hexCount = 0;
+        this.spiritCount = 0;
+        this.spellCount = 0;
 
         this.name = 'Wizard sort';
     }
@@ -23,6 +36,7 @@ class Wizard extends Sort {
 
         availableSpirits.slice(0, n).forEach(spirit => {
             spirit.spent = true;
+            this.spiritCount++;
             spirit.deathTime = performance.now();
         });
 
@@ -32,6 +46,9 @@ class Wizard extends Sort {
     arrangeSwaps(valueAndTargets) {
         const map = new Map();
         const allValues = new Set();
+
+        let swaps = 0;
+
         for (const { value, targetIndex } of valueAndTargets) {
             map.set(targetIndex, value);
             allValues.add(value);
@@ -53,12 +70,16 @@ class Wizard extends Sort {
         const leftoverValues = Array.from(allValues);
         shuffle(leftoverValues);
         for (let i = 0; i < leftoverIndices.length; i++) {
+            swaps += 1;
             map.set(leftoverIndices[i], leftoverValues[i]);
         }
 
         for (const key of map.keys()) {
+            swaps += 1;
             this.data[key] = map.get(key);
         }
+
+        this.swaps += swaps / 2;
     }
 
     playThunder() {
@@ -70,7 +91,6 @@ class Wizard extends Sort {
         this.thunder.volume.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 3);
 
         if (!this.thunder.started) {
-            console.log('starting');
             this.thunder.oscillator.start();
             this.thunder.started = true;
         }
@@ -100,8 +120,8 @@ class Wizard extends Sort {
         }
 
         this.arrangeSwaps(spellFromValues);
-        console.log('Deciding for spell!', spellFromValues);
 
+        this.spellCount++;
         this.spell = {
             indices: spellList,
             startTime: performance.now(),
@@ -113,7 +133,6 @@ class Wizard extends Sort {
         const availableIndices = new Array(this.hi - this.lo)
             .fill(0)
             .map((_, index) => this.lo + index);
-            // .filter(v => !this.doneSet.has(v));
 
         const randomSpot = availableIndices.chooseRandom();
         if (randomSpot === undefined) {
@@ -123,6 +142,7 @@ class Wizard extends Sort {
             spots: [randomSpot],
             complete: false,
         };
+        this.hexCount++;
     }
 
     step() {
@@ -141,6 +161,18 @@ class Wizard extends Sort {
         }
 
         if (!this.hex) {
+            if (this.ifHasThenPaySpirits(10)) {
+                this.createSpellForItems(9);
+                this.hex = null;
+
+                return;
+            }
+            if (this.ifHasThenPaySpirits(5)) {
+                this.createSpellForItems(4);
+                this.hex = null;
+
+                return;
+            }
             if (this.ifHasThenPaySpirits(3)) {
                 this.createSpellForItems(2);
                 this.hex = null;
@@ -191,7 +223,6 @@ class Wizard extends Sort {
         const FLOAT_BUFFER = 50;
         const MAX_SPEED = 1;
         const VEL_STEP = 0.1;
-        const DEATH_TIME = 1000;
 
         this.spirits = this.spirits.filter(spirit => !spirit.dead);
 
@@ -203,7 +234,7 @@ class Wizard extends Sort {
             }
             if (spirit.x === -1) {
                 spirit.x = randInt(SPAWN_BUFFER, areaWidth - SPAWN_BUFFER);
-                spirit.y = randInt(SPAWN_BUFFER, 2 * SPAWN_BUFFER);
+                spirit.y = areaHeight - SPIRIT_RADIUS; // randInt(SPAWN_BUFFER, 2 * SPAWN_BUFFER);
                 spirit.vx = 0;
                 spirit.vy = 0;
             }
@@ -228,28 +259,24 @@ class Wizard extends Sort {
     }
 
     draw(canvas, ctx, areaWidth, areaHeight) {
-        const SPIRIT_RADIUS = 25;
+        const BAR_CORNER = ROUNDED_CORNER;
 
         const sliceWidth = areaWidth / (this.hi - this.lo);
         const unitHeight = areaHeight / this.max;
 
         this.updateSpirits(areaWidth, areaHeight);
 
+        const now = performance.now();
+
         ctx.fillStyle = 'purple';
         ctx.beginPath();
         ctx.filter = 'drop-shadow(0px 0px 25px purple)';
-        for (const spirit of this.spirits.filter(s => !s.spent)) {
-            ctx.moveTo(spirit.x + SPIRIT_RADIUS, spirit.y);
-            ctx.ellipse(spirit.x, spirit.y, SPIRIT_RADIUS, SPIRIT_RADIUS, 0, 0, 2 * Math.PI);
-        }
-        ctx.fill();
-
-        ctx.fillStyle = 'red';
-        ctx.beginPath();
-        ctx.filter = 'drop-shadow(0px 0px 50px red)';
-        for (const spirit of this.spirits.filter(s => s.spent)) {
-            ctx.moveTo(spirit.x + SPIRIT_RADIUS, spirit.y);
-            ctx.ellipse(spirit.x, spirit.y, SPIRIT_RADIUS, SPIRIT_RADIUS, 0, 0, 2 * Math.PI);
+        for (const spirit of this.spirits) {
+            const radius = spirit.spent
+                ? Math.max(0, (1 - (now - spirit.deathTime) / DEATH_TIME) * SPIRIT_RADIUS)
+                : SPIRIT_RADIUS;
+            ctx.moveTo(spirit.x + radius, spirit.y);
+            ctx.ellipse(spirit.x, spirit.y, radius, radius, 0, 0, 2 * Math.PI);
         }
         ctx.fill();
 
@@ -257,7 +284,7 @@ class Wizard extends Sort {
 
         ctx.fillStyle = 'white';
         ctx.beginPath();
-        const inset = 8;
+        const inset = INSET;
         for (let i = this.lo; i < this.hi; i++) {
             if (this.doneSet.has(i) || this.spell?.indices?.has?.(i)) {
                 continue;
@@ -273,7 +300,7 @@ class Wizard extends Sort {
             const barHeight = this.data[i] * unitHeight;
             const y = areaHeight - barHeight;
 
-            canvas.drawRoundedRectangle(x, y, sliceWidth - inset, barHeight, { top: 8 });
+            canvas.drawRoundedRectangle(x, y, sliceWidth - inset, barHeight, { top: BAR_CORNER });
         }
         ctx.fill();
 
@@ -289,7 +316,7 @@ class Wizard extends Sort {
                 const barHeight = this.data[i] * unitHeight;
                 const y = areaHeight - barHeight;
 
-                canvas.drawRoundedRectangle(x, y, sliceWidth - inset, barHeight, { top: 8 });
+                canvas.drawRoundedRectangle(x, y, sliceWidth - inset, barHeight, { top: BAR_CORNER });
             }
             ctx.fill();
         }
@@ -305,12 +332,12 @@ class Wizard extends Sort {
             const barHeight = this.data[i] * unitHeight;
             const y = areaHeight - barHeight;
 
-            canvas.drawRoundedRectangle(x, y, sliceWidth - inset, barHeight, { top: 8 });
+            canvas.drawRoundedRectangle(x, y, sliceWidth - inset, barHeight, { top: BAR_CORNER });
         }
         ctx.fill();
 
         if (this.spell) {
-            const spellFraction = Math.max(Math.min(1, (performance.now() - this.spell.startTime) / SPELL_DURATION), 0);
+            const spellFraction = Math.max(Math.min(1, (now - this.spell.startTime) / SPELL_DURATION), 0);
 
             ctx.filter = 'drop-shadow(0 3px 8px maroon)';
             ctx.fillStyle = 'maroon';
@@ -328,10 +355,47 @@ class Wizard extends Sort {
                 );
                 const y = areaHeight - barHeight;
 
-                canvas.drawRoundedRectangle(x, y, sliceWidth - inset, barHeight, { top: 8 });
+                canvas.drawRoundedRectangle(x, y, sliceWidth - inset, barHeight, { top: BAR_CORNER });
             }
             ctx.fill();
+
+            const flashFraction = Math.max(1 - 2 * spellFraction, 0);
+            if (flashFraction > 0) {
+                ctx.filter = `drop-shadow(0 0 5px white) opacity(${Math.round(Math.sqrt(flashFraction) * 100)}%)`;
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                // ctx.filter = 'none';
+                // ctx.fillStyle = `hsla(0, 0%, 100%, ${Math.round(flashFraction * 100)}%)`;
+                // ctx.fillRect(-1920, -1920, 5000, 5000);
+
+                for (const i of Array.from(this.spell.indices)) {
+                    if (this.hex?.spots?.includes?.(i)) {
+                        continue;
+                    }
+
+                    const x = (i + 0.5) * sliceWidth;
+                    const endY = areaHeight;
+
+                    let y = -1000;
+
+                    ctx.moveTo(x, y);
+
+                    while (y < endY - 40) {
+                        y = y + randInt(20, 40);
+                        const nextX = randInt(-8, 9);
+
+                        ctx.lineTo(x + nextX, y);
+                    }
+
+                    ctx.lineTo(x, endY);
+                }
+
+                ctx.stroke();
+            }
         }
+
+        ctx.filter = 'none';
     }
 
     specialColumns() {

@@ -274,9 +274,16 @@ class Quick extends Sort {
         this.bestOf3 = false;
 
         this.name = 'Quicksort';
+
+        this.customData = [
+            { title: 'Partitions', count: () => this.partitionCount, width: 150 },
+        ];
+
+        this.partitionCount = 0;
     }
 
     createRange(lo, hi) {
+        this.partitionCount++;
         if (this.bestOf3 && hi - lo > 3) {
             const c1 = this.data[lo];
             const c2 = this.data[lo + 1];
