@@ -45,9 +45,9 @@ function sortChunks(array, minChunk, maxChunk) {
 
 const TEXT_HEIGHT = 28;
 const FRAME_DUR = 50;
-const WIDTH = 1200;
-const HEIGHT = 300;
-const NUM_ITEMS = 50;
+const WIDTH = 1000;
+const HEIGHT = 520;
+const NUM_ITEMS = 40;
 
 const INSET = 2;
 const ROUNDED_CORNER = 2;

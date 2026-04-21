@@ -12,8 +12,6 @@ class Wizard extends Sort {
         this.hex = null;
         this.spirits = [];
 
-        this.thunder = new Channel('triangle');
-
         this.customData = [
             { title: 'Spells', count: () => this.spellCount, width: 120 },
             { title: 'Sigils spent', count: () => this.spiritCount, width: 170 },
@@ -83,17 +81,30 @@ class Wizard extends Sort {
     }
 
     playThunder() {
-        this.thunder.oscillator.frequency.setValueAtTime(60, audioContext.currentTime);
-        this.thunder.oscillator.frequency.exponentialRampToValueAtTime(30, audioContext.currentTime + 2);
+        const thunder = new Channel('triangle');
 
-        this.thunder.volume.gain.setValueAtTime(0, audioContext.currentTime);
-        this.thunder.volume.gain.linearRampToValueAtTime(0.1, audioContext.currentTime);
-        this.thunder.volume.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 3);
+        const high = Math.random() * 60 + 30;
+        const lowFactor = Math.random() * 2 + 1;
 
-        if (!this.thunder.started) {
-            this.thunder.oscillator.start();
-            this.thunder.started = true;
+        thunder.oscillator.frequency.setValueAtTime(high, audioContext.currentTime);
+
+        thunder.oscillator.frequency.setValueAtTime(high, audioContext.currentTime + 0.05);
+        thunder.oscillator.frequency.exponentialRampToValueAtTime(high / lowFactor, audioContext.currentTime + 2);
+
+        const loud = Math.random() * 0.08 + 0.12;
+
+        thunder.volume.gain.setValueAtTime(0, audioContext.currentTime);
+        thunder.volume.gain.linearRampToValueAtTime(loud, audioContext.currentTime + 0.05);
+        thunder.volume.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2);
+
+        if (!thunder.started) {
+            thunder.oscillator.start();
+            thunder.started = true;
         }
+
+        setTimeout(() => {
+            thunder.oscillator.stop(audioContext.currentTime);
+        }, 2000);
     }
 
     createSpellForItems(n) {
@@ -363,7 +374,7 @@ class Wizard extends Sort {
             if (flashFraction > 0) {
                 ctx.filter = `drop-shadow(0 0 5px white) opacity(${Math.round(Math.sqrt(flashFraction) * 100)}%)`;
                 ctx.strokeStyle = 'white';
-                ctx.lineWidth = 5;
+                ctx.lineWidth = 8;
                 ctx.beginPath();
                 // ctx.filter = 'none';
                 // ctx.fillStyle = `hsla(0, 0%, 100%, ${Math.round(flashFraction * 100)}%)`;
@@ -383,7 +394,7 @@ class Wizard extends Sort {
 
                     while (y < endY - 40) {
                         y = y + randInt(20, 40);
-                        const nextX = randInt(-8, 9);
+                        const nextX = randInt(-12, 13);
 
                         ctx.lineTo(x + nextX, y);
                     }
@@ -396,6 +407,19 @@ class Wizard extends Sort {
         }
 
         ctx.filter = 'none';
+
+        if (this.paused) {
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            const inset = INSET;
+
+            const x = 0;
+            const barHeight = this.data[0] * unitHeight;
+            const y = areaHeight - barHeight;
+
+            canvas.drawRoundedRectangle(x, y, sliceWidth - inset, barHeight, { top: BAR_CORNER });
+            ctx.fill();
+        }
     }
 
     specialColumns() {
@@ -403,6 +427,9 @@ class Wizard extends Sort {
     }
 
     getNoteIndex() {
+        if (this.hex) {
+            return this.hex.spots[this.hex.spots.length - 1];
+        }
         return -1;
     }
 }

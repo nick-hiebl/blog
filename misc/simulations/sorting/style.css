@@ -10,7 +10,7 @@ body {
 }
 
 h1, h2, h3 {
-    /* font-size: 6em; */
+    font-size: 1.4em;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
 }
@@ -51,7 +51,7 @@ button {
 
 #canvas-box {
     position: absolute;
-    top: 9px;
+    top: 79px;
     width: 1920px;
     left: 9px;
     height: 1080px;
